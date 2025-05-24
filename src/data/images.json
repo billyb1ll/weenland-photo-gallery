@@ -1,0 +1,194 @@
+[
+	{
+		"id": 1,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=1",
+		"fullUrl": "https://picsum.photos/1200/800?random=1",
+		"title": "Sunset Landscape",
+		"category": "Nature",
+		"tags": ["sunset", "landscape", "outdoors"]
+	},
+	{
+		"id": 2,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=2",
+		"fullUrl": "https://picsum.photos/1200/800?random=2",
+		"title": "City Architecture",
+		"category": "Architecture",
+		"tags": ["city", "building", "urban"]
+	},
+	{
+		"id": 3,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=3",
+		"fullUrl": "https://picsum.photos/1200/800?random=3",
+		"title": "Portrait Study",
+		"category": "Portrait",
+		"tags": ["portrait", "people", "photography"]
+	},
+	{
+		"id": 4,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=4",
+		"fullUrl": "https://picsum.photos/1200/800?random=4",
+		"title": "Ocean Waves",
+		"category": "Nature",
+		"tags": ["ocean", "waves", "water"]
+	},
+	{
+		"id": 5,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=5",
+		"fullUrl": "https://picsum.photos/1200/800?random=5",
+		"title": "Modern Interior",
+		"category": "Architecture",
+		"tags": ["interior", "modern", "design"]
+	},
+	{
+		"id": 6,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=6",
+		"fullUrl": "https://picsum.photos/1200/800?random=6",
+		"title": "Street Photography",
+		"category": "Street",
+		"tags": ["street", "urban", "candid"]
+	},
+	{
+		"id": 7,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=7",
+		"fullUrl": "https://picsum.photos/1200/800?random=7",
+		"title": "Mountain Vista",
+		"category": "Nature",
+		"tags": ["mountains", "landscape", "vista"]
+	},
+	{
+		"id": 8,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=8",
+		"fullUrl": "https://picsum.photos/1200/800?random=8",
+		"title": "Abstract Art",
+		"category": "Abstract",
+		"tags": ["abstract", "art", "colorful"]
+	},
+	{
+		"id": 9,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=9",
+		"fullUrl": "https://picsum.photos/1200/800?random=9",
+		"title": "Wildlife Close-up",
+		"category": "Wildlife",
+		"tags": ["wildlife", "animals", "nature"]
+	},
+	{
+		"id": 10,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=10",
+		"fullUrl": "https://picsum.photos/1200/800?random=10",
+		"title": "Urban Night",
+		"category": "Street",
+		"tags": ["night", "urban", "lights"]
+	},
+	{
+		"id": 11,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=11",
+		"fullUrl": "https://picsum.photos/1200/800?random=11",
+		"title": "Botanical Study",
+		"category": "Nature",
+		"tags": ["plants", "botanical", "macro"]
+	},
+	{
+		"id": 12,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=12",
+		"fullUrl": "https://picsum.photos/1200/800?random=12",
+		"title": "Geometric Patterns",
+		"category": "Abstract",
+		"tags": ["geometric", "patterns", "design"]
+	},
+	{
+		"id": 13,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=13",
+		"fullUrl": "https://picsum.photos/1200/800?random=13",
+		"title": "Vintage Car",
+		"category": "Automotive",
+		"tags": ["vintage", "car", "classic"]
+	},
+	{
+		"id": 14,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=14",
+		"fullUrl": "https://picsum.photos/1200/800?random=14",
+		"title": "Food Photography",
+		"category": "Food",
+		"tags": ["food", "culinary", "delicious"]
+	},
+	{
+		"id": 15,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=15",
+		"fullUrl": "https://picsum.photos/1200/800?random=15",
+		"title": "Concert Stage",
+		"category": "Events",
+		"tags": ["concert", "music", "stage"]
+	},
+	{
+		"id": 16,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=16",
+		"fullUrl": "https://picsum.photos/1200/800?random=16",
+		"title": "Minimalist Space",
+		"category": "Architecture",
+		"tags": ["minimalist", "space", "clean"]
+	},
+	{
+		"id": 17,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=17",
+		"fullUrl": "https://picsum.photos/1200/800?random=17",
+		"title": "Autumn Forest",
+		"category": "Nature",
+		"tags": ["autumn", "forest", "trees"]
+	},
+	{
+		"id": 18,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=18",
+		"fullUrl": "https://picsum.photos/1200/800?random=18",
+		"title": "Dance Performance",
+		"category": "Events",
+		"tags": ["dance", "performance", "art"]
+	},
+	{
+		"id": 19,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=19",
+		"fullUrl": "https://picsum.photos/1200/800?random=19",
+		"title": "Coastal View",
+		"category": "Nature",
+		"tags": ["coast", "ocean", "cliffs"]
+	},
+	{
+		"id": 20,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=20",
+		"fullUrl": "https://picsum.photos/1200/800?random=20",
+		"title": "Industrial Design",
+		"category": "Architecture",
+		"tags": ["industrial", "design", "metal"]
+	},
+	{
+		"id": 21,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=21",
+		"fullUrl": "https://picsum.photos/1200/800?random=21",
+		"title": "Desert Landscape",
+		"category": "Nature",
+		"tags": ["desert", "sand", "dunes"]
+	},
+	{
+		"id": 22,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=22",
+		"fullUrl": "https://picsum.photos/1200/800?random=22",
+		"title": "Urban Reflection",
+		"category": "Street",
+		"tags": ["reflection", "city", "glass"]
+	},
+	{
+		"id": 23,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=23",
+		"fullUrl": "https://picsum.photos/1200/800?random=23",
+		"title": "Vintage Portrait",
+		"category": "Portrait",
+		"tags": ["vintage", "black-white", "classic"]
+	},
+	{
+		"id": 24,
+		"thumbnailUrl": "https://picsum.photos/400/300?random=24",
+		"fullUrl": "https://picsum.photos/1200/800?random=24",
+		"title": "Tropical Paradise",
+		"category": "Nature",
+		"tags": ["tropical", "beach", "paradise"]
+	}
+]
