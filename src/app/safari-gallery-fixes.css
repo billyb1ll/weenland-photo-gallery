@@ -1,0 +1,246 @@
+/* ===== CRITICAL SAFARI/iOS SPECIFIC FIXES ===== */
+
+/* iOS Safari viewport height fix */
+html {
+    height: -webkit-fill-available;
+}
+
+body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+}
+
+/* iOS Safari button touch target minimum size */
+button,
+[role="button"],
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* iOS Safari form input zoom prevention */
+input,
+select,
+textarea {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* iOS Safari sticky header fix */
+.sticky {
+    top: env(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top);
+}
+
+/* iOS Safari safe area support */
+.safe-area-top {
+    padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ===== SAFARI GALLERY CARD SPECIFIC FIXES ===== */
+
+/* Fix for Safari gallery card backdrop-blur button overlays */
+.group .absolute.backdrop-blur-sm,
+.group .absolute.backdrop-blur-md {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    isolation: isolate;
+}
+
+/* Safari gallery card hover state optimization */
+.group:hover .absolute {
+    -webkit-transform: translateZ(1px);
+    transform: translateZ(1px);
+    will-change: transform, opacity;
+}
+
+/* Safari gallery card button positioning fixes */
+.absolute.top-2.left-2,
+.absolute.top-2.right-2,
+.absolute.bottom-2.left-2,
+.absolute.bottom-2.right-2 {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    position: absolute;
+    z-index: 10;
+}
+
+/* Safari gallery card image scaling fix */
+.group:hover img {
+    -webkit-transform: translateZ(0) scale(1.1);
+    transform: translateZ(0) scale(1.1);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+/* Safari gallery card overlay gradient fix */
+.bg-gradient-to-t {
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Safari gallery card button border-radius with backdrop-filter fix */
+.rounded-lg.backdrop-blur-sm,
+.rounded-xl.backdrop-blur-sm,
+.rounded-md.backdrop-blur-sm {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    isolation: isolate;
+    -webkit-mask-clip: padding-box;
+    mask-clip: padding-box;
+}
+
+/* Safari gallery card text rendering on blurred backgrounds */
+.backdrop-blur-sm .text-white,
+.backdrop-blur-md .text-white {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Safari gallery card aspect-ratio container fix */
+.aspect-square .absolute {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Safari gallery card transition performance */
+.transition-all.duration-300,
+.transition-opacity.duration-300,
+.transition-transform.duration-700 {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform, opacity;
+}
+
+/* Safari gallery card shadow with backdrop-filter fix */
+.shadow-lg.backdrop-blur-sm {
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    -webkit-filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.1)) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+/* Safari gallery card edit form fixes */
+.bg-gray-50 {
+    background-color: rgba(249, 250, 251, 0.95);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+/* Safari gallery card mobile touch improvements */
+@media (max-width: 768px) {
+    .group .absolute button {
+        min-height: 44px;
+        min-width: 44px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .group:hover .opacity-0 {
+        opacity: 1;
+        -webkit-transform: translateY(0);
+        transform: translateY(0);
+    }
+}
+
+/* Safari gallery card memory optimization */
+.gallery-grid .group {
+    contain: layout style paint;
+    content-visibility: auto;
+    contain-intrinsic-size: 300px;
+}
+
+/* Safari gallery card z-index stacking fix */
+.group .z-10 {
+    position: relative;
+    z-index: 10;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Safari gallery card selection overlay fix */
+.absolute.inset-0.bg-plum-purple\/10 {
+    -webkit-backdrop-filter: blur(1px);
+    backdrop-filter: blur(1px);
+    mix-blend-mode: normal;
+}
+
+/* Safari gallery card button icon alignment */
+.flex.items-center.justify-center svg {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    display: block;
+}
+
+/* Safari gallery card critical fixes */
+.group .absolute.backdrop-blur-sm {
+    /* Force hardware acceleration */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+
+    /* Ensure proper layering */
+    isolation: isolate;
+    z-index: 10;
+
+    /* Safari backdrop-filter optimization */
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+/* Safari button hover state fix */
+@media (hover: hover) and (pointer: fine) {
+
+    button:hover,
+    [role="button"]:hover {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
+}
+
+/* Safari image loading optimization */
+img[loading="lazy"] {
+    content-visibility: auto;
+    contain-intrinsic-size: 300px 300px;
+}
+
+/* Safari CSS Grid fallback for older versions */
+@supports not (display: grid) {
+    .grid {
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-wrap: wrap;
+        flex-wrap: wrap;
+    }
+}
+
+/* Safari flex gap fallback */
+@supports not (gap: 1rem) {
+    .flex.gap-1>*+* {
+        margin-left: 0.25rem;
+    }
+
+    .flex.gap-2>*+* {
+        margin-left: 0.5rem;
+    }
+
+    .flex.gap-4>*+* {
+        margin-left: 1rem;
+    }
+}
+
+/* Safari transition timing optimization */
+.transition-all,
+.transition-transform,
+.transition-opacity {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}

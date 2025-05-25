@@ -35,7 +35,12 @@ const LoadingPopup: React.FC<LoadingPopupProps> = ({
 					</div>
 
 					{/* Loading Message */}
-					<h3 className="text-xl font-bold bg-gradient-to-r from-plum-purple to-purple-600 bg-clip-text text-transparent mb-2">
+					<h3
+						className="text-xl font-bold text-plum-purple bg-gradient-to-r from-plum-purple to-purple-600 bg-clip-text mb-2"
+						style={{
+							WebkitBackgroundClip: "text",
+							WebkitTextFillColor: "transparent",
+						}}>
 						{message}
 					</h3>
 

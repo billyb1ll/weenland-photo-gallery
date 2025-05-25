@@ -19,7 +19,6 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -49,6 +48,12 @@ body {
 }
 
 /* Modern smooth transitions with Safari optimization */
+@layer utilities {
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+}
+
 * {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   /* Safari performance optimization */
@@ -456,6 +461,32 @@ select:focus {
 
 .modern-btn:hover::before {
   left: 100%;
+}
+
+/* Gradient text utilities with fallbacks */
+.gradient-text {
+  background: linear-gradient(to right, var(--plum-purple), #8b5cf6, var(--honey-yellow));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Fallback for browsers that don't support gradient text */
+@supports not (-webkit-background-clip: text) {
+  .gradient-text {
+    color: var(--plum-purple);
+  }
+}
+
+/* Ensure text remains visible during font loading */
+.font-display-swap {
+  font-display: swap;
+}
+
+/* Additional text visibility utilities */
+.text-visible {
+  opacity: 1;
+  color: inherit;
 }
 
 /* Text utilities for better typography */

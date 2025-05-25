@@ -2,21 +2,22 @@
 
 import React, { useState, useEffect } from "react";
 import GalleryCard from "@/components/GalleryCard";
+import AdminGalleryCard from "@/components/AdminGalleryCard";
 import Lightbox from "@/components/Lightbox";
 import DayNavigationWithFeatures from "@/components/DayNavigationWithFeatures";
-import ModernAdminNavBar from "../components/ModernAdminNavBar";
+import EnhancedAdminNavBar from "@/components/EnhancedAdminNavBar";
 import LoadingPopup from "@/components/LoadingPopup";
-import imagesData from "@/data/images.json";
 
 interface ImageData {
 	id: number;
 	thumbnailUrl: string;
 	fullUrl: string;
 	title: string;
-	category: string;
-	tags: string[];
+	category?: string;
+	tags?: string[];
 	day?: number; // Add day property
 	uploadDate?: string;
+	isHighlight?: boolean; // Add highlight property
 }
 
 export default function Home() {
@@ -62,16 +63,34 @@ export default function Home() {
 		document.cookie = `weenland_favorites=${cookieValue}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
 	}, [favorites]);
 
-	// Initialize images with day assignments
+	// Initialize images by fetching from GCS
 	useEffect(() => {
-		const imagesWithDays = (imagesData as ImageData[]).map((img, index) => ({
-			...img,
-			day: Math.floor(index / 8) + 1, // Group every 8 images into a day
-			uploadDate: new Date(
-				Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
-			).toISOString(),
-		}));
-		setImages(imagesWithDays);
+		const loadImages = async () => {
+			try {
+				// First, sync with GCS to get latest images
+				await fetch("/api/sync", { method: "GET" });
+
+				// Then load the updated images
+				const response = await fetch("/data/images.json");
+				if (response.ok) {
+					const imagesFromGCS = await response.json();
+					const imagesWithDefaults = imagesFromGCS.map((img: ImageData) => ({
+						...img,
+						day: img.day || 1,
+						uploadDate: img.uploadDate || new Date().toISOString(),
+					}));
+					setImages(imagesWithDefaults);
+				} else {
+					console.error("Failed to load images");
+					setImages([]);
+				}
+			} catch (error) {
+				console.error("Error loading images:", error);
+				setImages([]);
+			}
+		};
+
+		loadImages();
 	}, []);
 
 	// Filter images based on search and filters
@@ -268,10 +287,101 @@ export default function Home() {
 		setIsLoggedIn(false);
 	};
 
-	const handleImageUpload = (file: File, day: number) => {
-		// Placeholder for Google Cloud Storage upload
-		console.log("Upload requested:", file.name, "for day:", day);
-		// TODO: Implement actual upload to Google Cloud Storage
+	const handleSyncComplete = async () => {
+		// Refresh images from the data source after sync
+		console.log("Sync completed, refreshing images...");
+
+		try {
+			// Re-import the updated images.json
+			const response = await fetch("/data/images.json");
+			if (response.ok) {
+				const updatedImages = await response.json();
+				const imagesWithDefaults = updatedImages.map((img: ImageData) => ({
+					...img,
+					day: img.day || 1,
+					uploadDate: img.uploadDate || new Date().toISOString(),
+				}));
+				setImages(imagesWithDefaults);
+				console.log("Images refreshed successfully");
+			} else {
+				console.error("Failed to fetch updated images");
+				// Fallback to page reload
+				window.location.reload();
+			}
+		} catch (error) {
+			console.error("Error refreshing images:", error);
+			// Fallback to page reload
+			window.location.reload();
+		}
+	};
+
+	// Admin image management functions
+	const handleUpdateImage = async (
+		id: number,
+		updates: {
+			day?: number;
+			title?: string;
+			category?: string;
+			tags?: string[];
+			isHighlight?: boolean;
+		}
+	) => {
+		try {
+			const response = await fetch("/api/images/update", {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					imageId: id,
+					...updates,
+				}),
+			});
+
+			if (response.ok) {
+				// Refresh images after successful update
+				await handleSyncComplete();
+			} else {
+				console.error("Failed to update image");
+				alert("Failed to update image. Please try again.");
+			}
+		} catch (error) {
+			console.error("Error updating image:", error);
+			alert("Error updating image. Please try again.");
+		}
+	};
+
+	const handleDeleteImage = async (id: number) => {
+		if (
+			!confirm(
+				"Are you sure you want to delete this image? This action cannot be undone."
+			)
+		) {
+			return;
+		}
+
+		try {
+			const response = await fetch("/api/images/delete", {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					imageId: id,
+				}),
+			});
+
+			if (response.ok) {
+				// Refresh images after successful deletion
+				await handleSyncComplete();
+			} else {
+				console.error("Failed to delete image");
+				alert("Failed to delete image. Please try again.");
+			}
+		} catch (error) {
+			console.error("Error deleting image:", error);
+			alert("Error deleting image. Please try again.");
+		}
 	};
 
 	return (
@@ -284,11 +394,13 @@ export default function Home() {
 			</div>
 
 			{/* Admin Navigation Bar */}
-			<ModernAdminNavBar
+			<EnhancedAdminNavBar
 				isLoggedIn={isLoggedIn}
 				onLogin={handleAdminLogin}
 				onLogout={handleAdminLogout}
-				onImageUpload={handleImageUpload}
+				images={images}
+				onImagesUpdate={handleSyncComplete}
+				selectedDay={selectedDay}
 			/>
 
 			<div className={`relative z-10 ${isLoggedIn ? "pt-0" : ""}`}>
@@ -296,7 +408,12 @@ export default function Home() {
 					{/* Header */}
 					<header className="text-center mb-8 sm:mb-12 lg:mb-16 animate-fade-in-up">
 						<h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 tracking-tight">
-							<span className="bg-gradient-to-r from-plum-purple via-purple-600 to-honey-yellow bg-clip-text text-transparent">
+							<span
+								className="text-plum-purple bg-gradient-to-r from-plum-purple via-purple-600 to-honey-yellow bg-clip-text"
+								style={{
+									WebkitBackgroundClip: "text",
+									WebkitTextFillColor: "transparent",
+								}}>
 								WEENLAND
 							</span>
 							<br />
@@ -334,18 +451,39 @@ export default function Home() {
 								key={image.id}
 								className="animate-fade-in-up"
 								style={{ animationDelay: `${index * 50}ms` }}>
-								<GalleryCard
-									id={image.id}
-									thumbnailUrl={image.thumbnailUrl}
-									fullUrl={image.fullUrl}
-									day={image.day}
-									isFavorite={favorites.has(image.id)}
-									isSelected={selectedImages.has(image.id)}
-									onFavoriteToggle={handleFavoriteToggle}
-									onSelect={handleImageSelect}
-									onImageClick={handleImageClick}
-									onDownload={handleDownload}
-								/>
+								{isLoggedIn ? (
+									<AdminGalleryCard
+										id={image.id}
+										thumbnailUrl={image.thumbnailUrl}
+										fullUrl={image.fullUrl}
+										title={image.title}
+										day={image.day}
+										isFavorite={favorites.has(image.id)}
+										isSelected={selectedImages.has(image.id)}
+										isAdmin={isLoggedIn}
+										isHighlight={image.isHighlight}
+										onFavoriteToggle={handleFavoriteToggle}
+										onSelect={handleImageSelect}
+										onImageClick={handleImageClick}
+										onDownload={handleDownload}
+										onUpdateImage={handleUpdateImage}
+										onDeleteImage={handleDeleteImage}
+									/>
+								) : (
+									<GalleryCard
+										id={image.id}
+										thumbnailUrl={image.thumbnailUrl}
+										fullUrl={image.fullUrl}
+										day={image.day}
+										isFavorite={favorites.has(image.id)}
+										isSelected={selectedImages.has(image.id)}
+										isHighlight={image.isHighlight}
+										onFavoriteToggle={handleFavoriteToggle}
+										onSelect={handleImageSelect}
+										onImageClick={handleImageClick}
+										onDownload={handleDownload}
+									/>
+								)}
 							</div>
 						))}
 					</div>

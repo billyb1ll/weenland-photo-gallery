@@ -1,24 +1,30 @@
-# WEENLAND Photo Gallery
+# 🏞️ WEENLAND Photo Gallery
 
-A modern, feature-rich photo gallery built with Next.js, TypeScript, and Tailwind CSS. Features a beautiful gradient theme with plum-purple and honey-yellow colors.
+A modern, feature-rich photo gallery built with Next.js, TypeScript, and Tailwind CSS. Now featuring **real Google Cloud Storage integration** for uploading, managing, and downloading photos with Thai language support.
 
-## Features
+## ✨ Features
 
-- 📸 **Responsive Gallery Grid**: Adapts from 1 to 4 columns based on screen size
-- 🔍 **Search & Filter**: Live search by title/tags and category filtering
-- ❤️ **Favorites System**: Mark images as favorites and toggle view
-- ✅ **Multi-Select & Batch Download**: Select multiple images and download as ZIP
-- 🖼️ **Lightbox Modal**: Full-screen image viewing with navigation
-- ♿ **Accessibility**: Keyboard navigation, focus management, and screen reader support
-- 📱 **Mobile Optimized**: Fully responsive design
-- ⚡ **Infinite Scroll**: Load images progressively for better performance
-- 🎨 **Custom Theme**: Beautiful diagonal gradient background
+- 📸 **Real Google Cloud Storage Integration** - Upload and manage photos in the cloud
+- 🖼️ **Automatic Image Processing** - Creates thumbnails and optimized full-size images
+- 📱 **Responsive Gallery Grid** - Adapts from 1 to 4 columns based on screen size
+- 🔍 **Search & Filter** - Live search by title/tags and category filtering
+- ❤️ **Favorites System** - Mark images as favorites and toggle view
+- ✅ **Multi-Select & Batch Download** - Select multiple images and download as ZIP
+- 📦 **Cloud-Based Downloads** - Download images directly from Google Cloud Storage
+- 🖼️ **Lightbox Modal** - Full-screen image viewing with navigation
+- 🌍 **Thai Language Support** - Full Thai interface and documentation
+- ♿ **Accessibility** - Keyboard navigation, focus management, and screen reader support
+- ⚡ **Infinite Scroll** - Load images progressively for better performance
+- 🎨 **Custom Theme** - Beautiful diagonal gradient background
+- 🔧 **Admin Panel** - Easy management interface for uploads and sync
 
-## Tech Stack
+## 🚀 Tech Stack
 
 - **Next.js 15** - React framework with App Router
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Utility-first CSS framework
+- **Google Cloud Storage** - Cloud storage for images
+- **Sharp** - High-performance image processing
 - **Lucide React** - Beautiful icons
 - **JSZip** - ZIP file creation for batch downloads
 - **File-Saver** - File download utilities
@@ -29,6 +35,99 @@ A modern, feature-rich photo gallery built with Next.js, TypeScript, and Tailwin
 
 - Node.js 18+ 
 - npm or yarn
+- Google Cloud Account (for cloud storage features)
+
+### 🚀 Quick Setup with Google Cloud Storage
+
+#### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+#### 2. Automated Google Cloud Setup
+
+Run the setup script for easy configuration:
+
+```bash
+./setup-gcs.sh
+```
+
+#### 3. Manual Google Cloud Setup (Alternative)
+
+1. **Create Google Cloud Project**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project named `weenland-photo-gallery`
+   - Enable Cloud Storage API
+
+2. **Create Storage Bucket**
+   - Create a bucket with a unique name (e.g., `weenland-photos-abc123`)
+   - Set location to `asia-southeast1` (Singapore)
+   - Make bucket publicly readable for images
+
+3. **Create Service Account**
+   - Create service account: `weenland-storage-service`
+   - Add roles: `Storage Admin` and `Storage Object Admin`
+   - Download JSON key file
+
+#### 4. Environment Configuration
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Create credentials directory
+mkdir credentials
+
+# Place your service account JSON file
+mv path/to/your-service-account.json credentials/gcp-service-account.json
+```
+
+Edit `.env` with your Google Cloud details:
+
+```env
+GOOGLE_CLOUD_PROJECT_ID=your-project-id
+GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
+GOOGLE_APPLICATION_CREDENTIALS=./credentials/gcp-service-account.json
+NEXT_PUBLIC_BUCKET_BASE_URL=https://storage.googleapis.com/your-bucket-name
+```
+
+#### 5. Test Connection
+
+```bash
+node test-gcs-connection.js
+```
+
+#### 6. Start Development
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3000` and click "Admin" to start uploading!
+
+### 📚 Complete Documentation
+
+- **[Thai Setup Guide](./GOOGLE_CLOUD_THAI_GUIDE.md)** - Comprehensive Thai guide
+- **[Integration Details](./GOOGLE_CLOUD_INTEGRATION.md)** - Technical documentation
+
+### 🎯 How to Use
+
+#### Upload Photos
+1. Click "Admin" button (bottom right corner)
+2. Select image files to upload  
+3. Choose the day for display
+4. Click "อัปโหลดรูปภาพ" (Upload Images)
+
+#### Download Photos  
+1. Click on photos to select them (checkbox appears)
+2. Click "ดาวน์โหลดรูปที่เลือก" (Download Selected)
+3. Get ZIP file with all selected images
+
+#### Sync from Cloud
+- Click "ซิงค์รูปภาพจาก Cloud Storage" to load new images
+
+## 📦 Installation (Traditional)
 
 ### Installation
 

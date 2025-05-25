@@ -1,0 +1,288 @@
+/* ===== SAFARI SPECIFIC COMPATIBILITY FIXES ===== */
+
+/* Safari backdrop-filter detection and fallbacks */
+@supports not ((backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px))) {
+
+    .backdrop-blur-sm,
+    .backdrop-blur-md,
+    .backdrop-blur-lg {
+        background: rgba(255, 255, 255, 0.8) !important;
+    }
+
+    .glass,
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .glass-dark {
+        background: rgba(0, 0, 0, 0.85) !important;
+    }
+}
+
+/* Safari transform optimization for all interactive elements */
+button,
+[role="button"],
+.transition-transform,
+.transform {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+}
+
+/* Safari-specific fixes for common Tailwind classes */
+.backdrop-blur-sm {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+.backdrop-blur-lg {
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+}
+
+/* Safari sticky positioning fixes */
+.sticky {
+    position: -webkit-sticky;
+    position: sticky;
+}
+
+/* Safari aspect-ratio fallback */
+@supports not (aspect-ratio: 1) {
+    .aspect-square {
+        position: relative;
+        width: 100%;
+        height: 0;
+        padding-bottom: 100%;
+    }
+
+    .aspect-square>* {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+}
+
+/* Safari smooth scrolling */
+html {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* Safari input and form fixes */
+input,
+textarea,
+select {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+input[type="search"] {
+    -webkit-appearance: textfield;
+    appearance: textfield;
+}
+
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Safari touch and interaction improvements */
+button,
+[role="button"],
+a {
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Safari performance optimizations for images */
+img {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform;
+}
+
+/* Safari text rendering optimization */
+body,
+html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Safari overflow and scroll fixes */
+.overflow-auto,
+.overflow-scroll {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Safari-specific media query optimizations */
+@media screen and (max-width: 768px) {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    button:active,
+    [role="button"]:active {
+        -webkit-transform: scale(0.95);
+        transform: scale(0.95);
+    }
+}
+
+/* Safari hover effects optimization */
+@media (hover: hover) {
+    .hover\:scale-105:hover {
+        -webkit-transform: translateZ(0) scale(1.05);
+        transform: translateZ(0) scale(1.05);
+    }
+
+    .hover\:scale-110:hover {
+        -webkit-transform: translateZ(0) scale(1.1);
+        transform: translateZ(0) scale(1.1);
+    }
+}
+
+/* Safari memory optimization for large galleries */
+.gallery-grid {
+    contain: layout style paint;
+}
+
+.gallery-card {
+    contain: layout paint;
+    content-visibility: auto;
+    contain-intrinsic-size: 300px;
+}
+
+/* ===== ADDITIONAL SAFARI EDGE CASE FIXES ===== */
+
+/* Safari 15+ specific fixes for backdrop-filter with rounded corners */
+@supports (backdrop-filter: blur(10px)) and (-webkit-backdrop-filter: blur(10px)) {
+
+    .rounded-xl,
+    .rounded-lg {
+        isolation: isolate;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
+}
+
+/* Safari gradient and border-radius interaction fix */
+.bg-gradient-to-r,
+.bg-gradient-to-l,
+.bg-gradient-to-t,
+.bg-gradient-to-b {
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+}
+
+/* Safari flexbox gap fallback for older versions */
+@supports not (gap: 1rem) {
+    .gap-1>*+* {
+        margin-left: 0.25rem;
+    }
+
+    .gap-2>*+* {
+        margin-left: 0.5rem;
+    }
+
+    .gap-3>*+* {
+        margin-left: 0.75rem;
+    }
+
+    .gap-4>*+* {
+        margin-left: 1rem;
+    }
+}
+
+/* Safari CSS Grid optimization */
+.grid {
+    display: -webkit-grid;
+    display: grid;
+}
+
+/* Safari button reset and optimization */
+button {
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+/* Safari focus-visible support */
+@supports not selector(:focus-visible) {
+
+    button:focus,
+    [role="button"]:focus {
+        outline: 2px solid #A849C5;
+        outline-offset: 2px;
+    }
+}
+
+/* Safari transition performance boost */
+.transition-all,
+.transition-transform,
+.transition-opacity {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform, opacity;
+}
+
+/* Safari modern container query fallback */
+@supports not (container-type: inline-size) {
+    .container {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* Safari filter and backdrop-filter combination fix */
+.backdrop-blur-sm.shadow-lg,
+.backdrop-blur-md.shadow-lg,
+.backdrop-blur-lg.shadow-lg {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    isolation: isolate;
+}
+
+/* Safari position: sticky with transform parent fix */
+.transform .sticky,
+.transition-transform .sticky {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+/* Safari SVG rendering optimization */
+svg {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    shape-rendering: geometricPrecision;
+}
+
+/* Safari viewport units fix for iOS */
+@supports (-webkit-touch-callout: none) {
+    .h-screen {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+
+    .min-h-screen {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+}

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { Download, Heart, Check } from "lucide-react";
+import { Download, Heart, Check, Star } from "lucide-react";
 
 interface GalleryCardProps {
 	id: number;
@@ -11,6 +11,7 @@ interface GalleryCardProps {
 	day?: number;
 	isFavorite: boolean;
 	isSelected: boolean;
+	isHighlight?: boolean;
 	onFavoriteToggle: (id: number) => void;
 	onSelect: (id: number) => void;
 	onImageClick: (id: number) => void;
@@ -24,6 +25,7 @@ const GalleryCard: React.FC<GalleryCardProps> = ({
 	day,
 	isFavorite,
 	isSelected,
+	isHighlight = false,
 	onFavoriteToggle,
 	onSelect,
 	onImageClick,
@@ -31,10 +33,16 @@ const GalleryCard: React.FC<GalleryCardProps> = ({
 }) => {
 	return (
 		<div
-			className={`group relative bg-white border border-gray-200 rounded-2xl overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-xl hover:border-gray-300
+			className={`group relative bg-white border ${
+				isHighlight ? "border-yellow-400 border-2" : "border-gray-200"
+			} rounded-2xl overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-xl ${
+				isHighlight ? "hover:border-yellow-500" : "hover:border-gray-300"
+			}
                         ${
 																									isSelected
 																										? "ring-2 ring-plum-purple ring-opacity-60 shadow-lg shadow-plum-purple/20"
+																										: isHighlight
+																										? "shadow-md shadow-yellow-200/50"
 																										: "shadow-sm"
 																								}`}>
 			{/* Image container */}
@@ -52,33 +60,41 @@ const GalleryCard: React.FC<GalleryCardProps> = ({
 				<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
 				{/* Selection checkbox */}
-				<div className="absolute top-3 left-3 z-10">
+				<div className="absolute top-2 left-2 z-10">
 					<button
 						onClick={() => onSelect(id)}
-						className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all duration-300 backdrop-blur-sm
+						className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300 backdrop-blur-sm
                                   ${
 																																			isSelected
-																																				? "bg-plum-purple border-plum-purple text-white shadow-lg shadow-plum-purple/40 scale-110"
-																																				: "bg-white/90 border-white/60 hover:border-plum-purple hover:bg-plum-purple/10 hover:scale-110"
+																																				? "bg-plum-purple border-plum-purple text-white shadow-lg shadow-plum-purple/40"
+																																				: "bg-white/90 border-white/60 hover:border-plum-purple hover:bg-plum-purple/10"
 																																		}`}
 						aria-label={isSelected ? "Deselect image" : "Select image"}>
-						{isSelected && <Check size={16} strokeWidth={3} />}
+						{isSelected && <Check size={14} strokeWidth={3} />}
 					</button>
 				</div>
 
-				{/* Favorite button */}
-				<div className="absolute top-3 right-3 z-10">
+				{/* Top right buttons container */}
+				<div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+					{/* Highlight star */}
+					{isHighlight && (
+						<div className="w-7 h-7 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-white flex items-center justify-center shadow-lg shadow-yellow-400/30 animate-pulse">
+							<Star size={16} fill="white" strokeWidth={0} />
+						</div>
+					)}
+
+					{/* Favorite button */}
 					<button
 						onClick={() => onFavoriteToggle(id)}
-						className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 backdrop-blur-sm
+						className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all duration-300 backdrop-blur-sm
                                   ${
 																																			isFavorite
-																																				? "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg shadow-red-500/40 scale-110"
-																																				: "bg-white/90 text-gray-600 hover:bg-red-50 hover:text-red-500 hover:scale-110"
+																																				? "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg shadow-red-500/40"
+																																				: "bg-white/90 text-gray-600 hover:bg-red-50 hover:text-red-500"
 																																		}`}
 						aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}>
 						<Heart
-							size={18}
+							size={16}
 							fill={isFavorite ? "currentColor" : "none"}
 							strokeWidth={isFavorite ? 0 : 2}
 						/>
@@ -86,30 +102,26 @@ const GalleryCard: React.FC<GalleryCardProps> = ({
 				</div>
 
 				{/* Image ID and Day badge */}
-				<div className="absolute bottom-3 left-3 z-10">
-					<div className="flex items-center gap-2">
-						<span className="bg-gradient-to-r from-black/90 to-black/70 text-white text-xs font-mono px-2.5 py-1.5 rounded-lg backdrop-blur-sm border border-white/20">
+				<div className="absolute bottom-2 left-2 z-10">
+					<div className="flex items-center gap-1.5">
+						<span className="bg-black/80 text-white text-xs font-mono px-2 py-1 rounded-md backdrop-blur-sm">
 							#{id}
 						</span>
 						{day && (
-							<span className="bg-gradient-to-r from-plum-purple/90 to-purple-600/90 text-white text-xs font-medium px-2.5 py-1.5 rounded-lg backdrop-blur-sm border border-white/20">
-								Day {day}
+							<span className="bg-plum-purple/80 text-white text-xs font-medium px-2 py-1 rounded-md backdrop-blur-sm">
+								D{day}
 							</span>
 						)}
 					</div>
 				</div>
 
 				{/* Download button (appears on hover) */}
-				<div className="absolute bottom-3 right-3 z-10 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+				<div className="absolute bottom-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
 					<button
 						onClick={() => onDownload(fullUrl, `image-${id}`)}
-						className="bg-gradient-to-r from-plum-purple to-purple-600 text-white rounded-xl px-4 py-2 text-sm font-medium
-                                 hover:from-purple-600 hover:to-purple-700 shadow-lg shadow-plum-purple/40 
-                                 hover:shadow-plum-purple/60 hover:scale-105 transition-all duration-300
-                                 backdrop-blur-sm border border-white/20 flex items-center gap-2"
+						className="w-7 h-7 bg-green-500/90 text-white rounded-lg flex items-center justify-center transition-all duration-300 backdrop-blur-sm hover:bg-green-600"
 						aria-label={`Download image ${id}`}>
-						<Download size={14} />
-						<span className="hidden sm:inline">Download</span>
+						<Download size={14} strokeWidth={2} />
 					</button>
 				</div>
 			</div>

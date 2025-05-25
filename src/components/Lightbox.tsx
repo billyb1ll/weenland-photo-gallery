@@ -11,7 +11,7 @@ interface LightboxProps {
 		id: number;
 		fullUrl: string;
 		title: string;
-		category: string;
+		category?: string;
 	}>;
 	onClose: () => void;
 	onDownload: (fullUrl: string, title: string) => void;

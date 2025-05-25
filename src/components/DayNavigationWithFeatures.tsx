@@ -61,7 +61,12 @@ const DayNavigationWithFeatures: React.FC<DayNavigationWithFeaturesProps> = ({
 						<Calendar size={24} className="text-white" />
 					</div>
 					<div>
-						<h2 className="text-xl font-bold bg-gradient-to-r from-plum-purple to-purple-600 bg-clip-text text-transparent">
+						<h2
+							className="text-xl font-bold text-plum-purple bg-gradient-to-r from-plum-purple to-purple-600 bg-clip-text"
+							style={{
+								WebkitBackgroundClip: "text",
+								WebkitTextFillColor: "transparent",
+							}}>
 							Gallery Collections
 						</h2>
 						<p className="text-sm text-gray-600">
