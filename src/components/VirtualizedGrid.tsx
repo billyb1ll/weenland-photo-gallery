@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useInfiniteScroll } from "./InfiniteScrollHook";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 
 interface VirtualizedGridProps<T> {
 	items: T[];

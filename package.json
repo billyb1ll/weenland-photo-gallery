@@ -1,40 +1,47 @@
 {
-  "name": "weenland-photo-gallery",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@google-cloud/storage": "^7.16.0",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.9",
-    "bcryptjs": "^3.0.2",
-    "dotenv": "^16.5.0",
-    "file-saver": "^2.0.5",
-    "form-data": "^4.0.2",
-    "geist": "^1.4.2",
-    "jsonwebtoken": "^9.0.2",
-    "jszip": "^3.10.1",
-    "lucide-react": "^0.511.0",
-    "next": "15.1.8",
-    "node-fetch": "^2.7.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "sharp": "^0.34.2"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.1.8",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5"
-  }
+	"name": "weenland-photo-gallery",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev --turbopack",
+		"build": "next build",
+		"start": "next start",
+		"lint": "next lint",
+		"test:connection": "node scripts/test-gcs-connection.js",
+		"test:auth": "node scripts/test-auth.js",
+		"test:upload": "node scripts/test-upload.js",
+		"test:env": "node scripts/test-env.js",
+		"sync:images": "node scripts/sync-images.js",
+		"setup:gcs": "./scripts/setup-gcs.sh",
+		"generate:hash": "node scripts/generate-hash.js"
+	},
+	"dependencies": {
+		"@google-cloud/storage": "^7.16.0",
+		"@types/bcryptjs": "^2.4.6",
+		"@types/jsonwebtoken": "^9.0.9",
+		"bcryptjs": "^3.0.2",
+		"dotenv": "^16.5.0",
+		"file-saver": "^2.0.5",
+		"form-data": "^4.0.2",
+		"geist": "^1.4.2",
+		"jsonwebtoken": "^9.0.2",
+		"jszip": "^3.10.1",
+		"lucide-react": "^0.511.0",
+		"next": "15.1.8",
+		"node-fetch": "^2.7.0",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"sharp": "^0.34.2"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^3",
+		"@types/node": "^20",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"eslint": "^9",
+		"eslint-config-next": "15.1.8",
+		"postcss": "^8",
+		"tailwindcss": "^3.4.1",
+		"typescript": "^5"
+	}
 }
