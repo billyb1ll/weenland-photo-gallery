@@ -8,14 +8,7 @@ import DayNavigationWithFeatures from "@/components/DayNavigationWithFeatures";
 import EnhancedAdminNavBar from "@/components/EnhancedAdminNavBar";
 import LoadingPopup from "@/components/LoadingPopup";
 import VirtualizedGrid from "@/components/VirtualizedGrid";
-import { preloadImageBatch, clearPreloadCache } from "@/lib/image-preloader";
-import {
-	trackImageUsage,
-	unloadUnusedImages,
-	startPeriodicImageCleanup,
-	stopPeriodicImageCleanup,
-	getMemoryStats,
-} from "@/lib/memory-manager";
+import { useInfiniteScroll } from "@/components/InfiniteScrollHook";
 
 interface ImageData {
 	id: number;
@@ -24,9 +17,9 @@ interface ImageData {
 	title: string;
 	category?: string;
 	tags?: string[];
-	day?: number;
+	day?: number; // Add day property
 	uploadDate?: string;
-	isHighlight?: boolean;
+	isHighlight?: boolean; // Add highlight property
 }
 
 export default function Home() {
@@ -37,29 +30,22 @@ export default function Home() {
 	const [selectedDay, setSelectedDay] = useState<number | null>(null);
 	const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 	const [lightboxImageId, setLightboxImageId] = useState<number | null>(null);
+	const [displayedImages, setDisplayedImages] = useState<ImageData[]>([]);
+	const [itemsToShow, setItemsToShow] = useState(100); // 100 images per batch for better performance
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const [isDownloading, setIsDownloading] = useState(false);
 	const [downloadProgress, setDownloadProgress] = useState<number | undefined>(
 		undefined
 	);
+	const [isLoading, setIsLoading] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalImages, setTotalImages] = useState(0);
 	const [loadingError, setLoadingError] = useState<string | null>(null);
-	const [optimizationInfo, setOptimizationInfo] = useState({
-		totalImages: 0,
-		cachedImages: 0,
-		memoryUsage: 0,
-	});
-
 	// References for optimization
 	const loadingRef = useRef(false);
+	const scrollListenerRef = useRef<(() => void) | null>(null);
 	const abortControllerRef = useRef<AbortController | null>(null);
-	const preloadAbortControllerRef = useRef<AbortController | null>(null);
-	const cleanupIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-	// Reference for caching day images to avoid redundant fetches
-	const dayImagesCache = useRef<Record<number, ImageData[]>>({});
 
 	// Load favorites from cookies on mount
 	useEffect(() => {
@@ -88,52 +74,36 @@ export default function Home() {
 		document.cookie = `weenland_favorites=${cookieValue}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
 	}, [favorites]);
 
-	// Filter images based on search and filters
-	useEffect(() => {
-		let filtered = images;
-
-		// Filter by day
-		if (selectedDay !== null) {
-			filtered = filtered.filter((img) => img.day === selectedDay);
-		}
-
-		// Filter by favorites
-		if (showFavoritesOnly) {
-			filtered = filtered.filter((img) => favorites.has(img.id));
-		}
-
-		setFilteredImages(filtered);
-	}, [images, selectedDay, showFavoritesOnly, favorites]);
-
 	// Load more images from server with better error handling and abort controller
 	const loadMoreImages = useCallback(async () => {
 		// Use loadingRef to prevent concurrent loads
 		if (loadingRef.current || !hasMore) return;
-
+		
 		// Cancel any previous request
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort();
 		}
-
+		
 		// Create new abort controller
 		abortControllerRef.current = new AbortController();
-
+		
 		try {
 			loadingRef.current = true;
-
+			setIsLoading(true);
+			
 			const params = new URLSearchParams({
 				page: currentPage.toString(),
-				limit: "100",
+				limit: '100'
 			});
-
+			
 			if (selectedDay !== null) {
-				params.append("day", selectedDay.toString());
+				params.append('day', selectedDay.toString());
 			}
-
+			
 			const response = await fetch(`/api/images?${params.toString()}`, {
-				signal: abortControllerRef.current.signal,
+				signal: abortControllerRef.current.signal
 			});
-
+			
 			if (response.ok) {
 				const data = await response.json();
 				const newImages = data.images.map((img: ImageData) => ({
@@ -141,35 +111,34 @@ export default function Home() {
 					day: img.day || 1,
 					uploadDate: img.uploadDate || new Date().toISOString(),
 				}));
-
-				setImages((prev) => {
+				
+				setImages(prev => {
 					// Filter out duplicates (by id)
-					const existingIds = new Set(prev.map((img) => img.id));
-					const uniqueNewImages = newImages.filter(
-						(img: ImageData) => !existingIds.has(img.id)
-					);
+					const existingIds = new Set(prev.map(img => img.id));
+					const uniqueNewImages = newImages.filter(img => !existingIds.has(img.id));
 					return [...prev, ...uniqueNewImages];
 				});
-
+				
 				setHasMore(data.hasMore);
-				setCurrentPage((prev) => prev + 1);
+				setCurrentPage(prev => prev + 1);
 				setLoadingError(null);
 			} else {
 				const errorData = await response.json();
-				setLoadingError(errorData.error || "Failed to load images");
-				console.error("Failed to load images:", errorData);
+				setLoadingError(errorData.error || 'Failed to load images');
+				console.error('Failed to load images:', errorData);
 			}
 		} catch (error) {
 			// Ignore abort errors
-			if (error instanceof DOMException && error.name === "AbortError") {
-				console.log("Image loading aborted");
+			if (error instanceof DOMException && error.name === 'AbortError') {
+				console.log('Image loading aborted');
 				return;
 			}
-
+			
 			console.error("Error loading more images:", error);
-			setLoadingError("Failed to load images. Please try again.");
+			setLoadingError('Failed to load images. Please try again.');
 		} finally {
 			loadingRef.current = false;
+			setIsLoading(false);
 			abortControllerRef.current = null;
 		}
 	}, [currentPage, hasMore, selectedDay]);
@@ -180,29 +149,30 @@ export default function Home() {
 			setCurrentPage(1);
 			setImages([]);
 			loadingRef.current = true;
-
+			setIsLoading(true);
+			
 			try {
 				// Cancel any previous request
 				if (abortControllerRef.current) {
 					abortControllerRef.current.abort();
 				}
-
+				
 				// Create new abort controller
 				abortControllerRef.current = new AbortController();
-
+				
 				const params = new URLSearchParams({
-					page: "1",
-					limit: "100",
+					page: '1',
+					limit: '100'
 				});
-
+				
 				if (selectedDay !== null) {
-					params.append("day", selectedDay.toString());
+					params.append('day', selectedDay.toString());
 				}
-
+				
 				const response = await fetch(`/api/images?${params.toString()}`, {
-					signal: abortControllerRef.current.signal,
+					signal: abortControllerRef.current.signal
 				});
-
+				
 				if (response.ok) {
 					const data = await response.json();
 					const imagesWithDefaults = data.images.map((img: ImageData) => ({
@@ -210,36 +180,37 @@ export default function Home() {
 						day: img.day || 1,
 						uploadDate: img.uploadDate || new Date().toISOString(),
 					}));
-
+					
 					setImages(imagesWithDefaults);
-					setTotalImages(data.totalImages);
+					setTotalImages(data.total);
 					setHasMore(data.hasMore);
 					setCurrentPage(2); // Next page to load
 					setLoadingError(null);
 				} else {
 					const errorData = await response.json();
-					setLoadingError(errorData.error || "Failed to load images");
-					console.error("Failed to load images:", errorData);
+					setLoadingError(errorData.error || 'Failed to load images');
+					console.error('Failed to load images:', errorData);
 					setImages([]);
 				}
 			} catch (error) {
 				// Ignore abort errors
-				if (error instanceof DOMException && error.name === "AbortError") {
-					console.log("Image loading aborted");
+				if (error instanceof DOMException && error.name === 'AbortError') {
+					console.log('Image loading aborted');
 					return;
 				}
-
+				
 				console.error("Error loading images:", error);
-				setLoadingError("Failed to load images. Please try again.");
+				setLoadingError('Failed to load images. Please try again.');
 				setImages([]);
 			} finally {
 				loadingRef.current = false;
+				setIsLoading(false);
 				abortControllerRef.current = null;
 			}
 		};
 
 		initImages();
-
+		
 		// Cleanup function
 		return () => {
 			if (abortControllerRef.current) {
@@ -247,6 +218,26 @@ export default function Home() {
 			}
 		};
 	}, [selectedDay]);
+
+	// Throttle function for performance
+	function throttle(func: (...args: unknown[]) => void, delay: number) {
+		let timeoutId: NodeJS.Timeout;
+		let lastExecTime = 0;
+		return function (...args: unknown[]) {
+			const currentTime = Date.now();
+			
+			if (currentTime - lastExecTime > delay) {
+				func(...args);
+				lastExecTime = currentTime;
+			} else {
+				clearTimeout(timeoutId);
+				timeoutId = setTimeout(() => {
+					func(...args);
+					lastExecTime = Date.now();
+				}, delay - (currentTime - lastExecTime));
+			}
+		};
+	}
 
 	// Get available days from images
 	const availableDays = Array.from(
@@ -256,7 +247,6 @@ export default function Home() {
 				.filter((day): day is number => day !== undefined)
 		)
 	).sort((a, b) => a - b);
-
 	const handleFavoriteToggle = (id: number) => {
 		setFavorites((prev) => {
 			const newFavorites = new Set(prev);
@@ -281,27 +271,9 @@ export default function Home() {
 		});
 	};
 
-	// Track image usage for memory management when viewing images
-	const handleImageClick = useCallback(
-		(id: number) => {
-			// Find the image to get its URL for memory tracking
-			const image = images.find((img) => img.id === id);
-			if (image) {
-				// Track both thumbnail and full image URLs with high priority
-				trackImageUsage(image.thumbnailUrl, 3);
-				trackImageUsage(image.fullUrl, 3);
-
-				// Trigger memory cleanup if we have too many images
-				if (images.length > 1000) {
-					setTimeout(() => unloadUnusedImages(), 500);
-				}
-			}
-
-			// Set the lightbox image
-			setLightboxImageId(id);
-		},
-		[images]
-	);
+	const handleImageClick = (id: number) => {
+		setLightboxImageId(id);
+	};
 
 	const handleDownload = (fullUrl: string, filename: string) => {
 		try {
@@ -404,102 +376,8 @@ export default function Home() {
 
 	// Handle day navigation
 	const handleDaySelect = (day: number | null) => {
-		// Abort any ongoing preloading
-		if (preloadAbortControllerRef.current) {
-			preloadAbortControllerRef.current.abort();
-			preloadAbortControllerRef.current = null;
-		}
-
 		setSelectedDay(day);
 	};
-
-	// Preload images for adjacent days
-	useEffect(() => {
-		const preloadAdjacentDaysImages = async () => {
-			if (selectedDay === null || availableDays.length <= 1) return;
-
-			// Create a new abort controller for this preloading task
-			preloadAbortControllerRef.current = new AbortController();
-			const signal = preloadAbortControllerRef.current.signal;
-
-			// Find current day index
-			const currentDayIndex = availableDays.indexOf(selectedDay);
-			if (currentDayIndex === -1) return;
-
-			// Get next and previous days
-			const nextDay = availableDays[currentDayIndex + 1];
-			const prevDay = availableDays[currentDayIndex - 1];
-
-			// Function to fetch images for a specific day
-			const getImagesForDay = async (day: number): Promise<string[]> => {
-				// Check if already in cache
-				if (dayImagesCache.current[day]) {
-					return dayImagesCache.current[day].map((img) => img.thumbnailUrl);
-				}
-
-				// Otherwise fetch from API
-				try {
-					const params = new URLSearchParams({
-						page: "1",
-						limit: "30", // Just get first batch for preloading
-						day: day.toString(),
-					});
-
-					const response = await fetch(`/api/images?${params.toString()}`, {
-						signal: signal,
-					});
-
-					if (response.ok) {
-						const data = await response.json();
-						const dayImages = data.images.map((img: ImageData) => ({
-							...img,
-							day: img.day || 1,
-							uploadDate: img.uploadDate || new Date().toISOString(),
-						}));
-
-						// Cache the day's images
-						dayImagesCache.current[day] = dayImages;
-
-						return dayImages.map((img: ImageData) => img.thumbnailUrl);
-					}
-					return [];
-				} catch (error) {
-					if (error instanceof DOMException && error.name === "AbortError") {
-						console.log("Preloading aborted");
-					} else {
-						console.error(`Error preloading day ${day}:`, error);
-					}
-					return [];
-				}
-			};
-
-			// Preload next and previous day thumbnails
-			if (nextDay !== undefined) {
-				getImagesForDay(nextDay).then((urls) => {
-					if (signal.aborted) return;
-					preloadImageBatch(urls, { priority: "low", signal });
-				});
-			}
-
-			if (prevDay !== undefined) {
-				getImagesForDay(prevDay).then((urls) => {
-					if (signal.aborted) return;
-					preloadImageBatch(urls, { priority: "low", signal });
-				});
-			}
-		};
-
-		// Wait a short time after the current day is loaded before preloading others
-		const timeoutId = setTimeout(preloadAdjacentDaysImages, 1000);
-
-		return () => {
-			clearTimeout(timeoutId);
-			if (preloadAbortControllerRef.current) {
-				preloadAbortControllerRef.current.abort();
-				preloadAbortControllerRef.current = null;
-			}
-		};
-	}, [selectedDay, availableDays]);
 
 	// Get image counts by day
 	const imageCountsByDay = images.reduce((acc, img) => {
@@ -519,77 +397,30 @@ export default function Home() {
 	};
 
 	const handleSyncComplete = async () => {
-		// Refresh images from the API after upload/sync
+		// Refresh images from the data source after sync
 		console.log("Sync completed, refreshing images...");
 
 		try {
-			// Reset pagination and clear current images
-			setCurrentPage(1);
-			setImages([]);
-			setHasMore(true);
-			loadingRef.current = false;
-
-			// Cancel any existing requests
-			if (abortControllerRef.current) {
-				abortControllerRef.current.abort();
-			}
-
-			// Create new abort controller
-			abortControllerRef.current = new AbortController();
-
-			// Fetch fresh images from API with cache busting
-			const params = new URLSearchParams({
-				page: "1",
-				limit: "100",
-				_t: Date.now().toString(), // Cache buster
-			});
-
-			if (selectedDay !== null) {
-				params.append("day", selectedDay.toString());
-			}
-
-			const response = await fetch(`/api/images?${params.toString()}`, {
-				signal: abortControllerRef.current.signal,
-				headers: {
-					"Cache-Control": "no-cache, no-store, must-revalidate",
-					Pragma: "no-cache",
-					Expires: "0",
-				},
-			});
-
+			// Re-import the updated images.json
+			const response = await fetch("/data/images.json");
 			if (response.ok) {
-				const data = await response.json();
-				const newImages = data.images.map((img: ImageData) => ({
+				const updatedImages = await response.json();
+				const imagesWithDefaults = updatedImages.map((img: ImageData) => ({
 					...img,
 					day: img.day || 1,
 					uploadDate: img.uploadDate || new Date().toISOString(),
 				}));
-
-				setImages(newImages);
-				setTotalImages(data.totalImages);
-				setHasMore(data.hasMore);
-				setCurrentPage(2); // Set to page 2 since we loaded page 1
-				setLoadingError(null);
-				console.log(
-					`Images refreshed successfully: ${newImages.length} images loaded`
-				);
+				setImages(imagesWithDefaults);
+				console.log("Images refreshed successfully");
 			} else {
-				console.error("Failed to fetch updated images from API");
+				console.error("Failed to fetch updated images");
 				// Fallback to page reload
 				window.location.reload();
 			}
 		} catch (error) {
-			// Ignore abort errors
-			if (error instanceof DOMException && error.name === "AbortError") {
-				console.log("Image refresh aborted");
-				return;
-			}
-
 			console.error("Error refreshing images:", error);
 			// Fallback to page reload
 			window.location.reload();
-		} finally {
-			abortControllerRef.current = null;
 		}
 	};
 
@@ -662,54 +493,6 @@ export default function Home() {
 		}
 	};
 
-	// Setup memory management for large image collections
-	useEffect(() => {
-		// Start periodic cleanup for memory management
-		cleanupIntervalRef.current = startPeriodicImageCleanup(90 * 1000); // Run every 90 seconds
-
-		// Clean up on component unmount
-		return () => {
-			if (cleanupIntervalRef.current) {
-				stopPeriodicImageCleanup(cleanupIntervalRef.current);
-				cleanupIntervalRef.current = null;
-			}
-
-			// Final cleanup before unmount
-			unloadUnusedImages(0, 0); // Unload all tracked images
-			clearPreloadCache();
-		};
-	}, []);
-
-	// Update optimization info periodically
-	useEffect(() => {
-		if (!isLoggedIn) return; // Only track when admin is logged in
-
-		const updateStats = () => {
-			const memStats = getMemoryStats();
-			const cachedImgCount = Object.keys(dayImagesCache.current).reduce(
-				(total, day) => total + dayImagesCache.current[parseInt(day)].length,
-				0
-			);
-
-			setOptimizationInfo({
-				totalImages: images.length,
-				cachedImages: cachedImgCount,
-				memoryUsage: memStats.percentUsed || 0,
-			});
-		};
-
-		// Update immediately and then every 10 seconds
-		updateStats();
-		const interval = setInterval(updateStats, 10000);
-
-		return () => clearInterval(interval);
-	}, [isLoggedIn, images.length]);
-
-	// Remove the duplicate handleImageView and handleImageClick declarations
-
-	// Removed duplicate optimizationInfo declaration and effect
-	// The original declaration and effect are kept at lines ~50-80
-
 	return (
 		<div className="min-h-screen bg-white relative">
 			{/* Background decorative elements */}
@@ -727,7 +510,6 @@ export default function Home() {
 				images={images}
 				onImagesUpdate={handleSyncComplete}
 				selectedDay={selectedDay}
-				optimizationInfo={optimizationInfo}
 			/>
 
 			<div className={`relative z-10 ${isLoggedIn ? "pt-0" : ""}`}>
@@ -771,95 +553,51 @@ export default function Home() {
 						/>
 					</div>
 
-					{/* Virtualized Gallery Grid */}
+					{/* Gallery Grid */}
 					<VirtualizedGrid
-						items={filteredImages}
-						totalItems={totalImages}
-						renderItem={(image) =>
-							isLoggedIn ? (
-								<AdminGalleryCard
-									id={image.id}
-									thumbnailUrl={image.thumbnailUrl}
-									fullUrl={image.fullUrl}
-									title={image.title}
-									day={image.day}
-									isFavorite={favorites.has(image.id)}
-									isSelected={selectedImages.has(image.id)}
-									isAdmin={isLoggedIn}
-									isHighlight={image.isHighlight}
-									onFavoriteToggle={handleFavoriteToggle}
-									onSelect={handleImageSelect}
-									onImageClick={handleImageClick}
-									onDownload={handleDownload}
-									onUpdateImage={handleUpdateImage}
-									onDeleteImage={handleDeleteImage}
-								/>
-							) : (
-								<GalleryCard
-									id={image.id}
-									thumbnailUrl={image.thumbnailUrl}
-									fullUrl={image.fullUrl}
-									day={image.day}
-									isFavorite={favorites.has(image.id)}
-									isSelected={selectedImages.has(image.id)}
-									isHighlight={image.isHighlight}
-									onFavoriteToggle={handleFavoriteToggle}
-									onSelect={handleImageSelect}
-									onImageClick={handleImageClick}
-									onDownload={handleDownload}
-								/>
-							)
-						}
-						itemKey={(image) => image.id}
-						onLoadMore={loadMoreImages}
-						hasMore={hasMore}
-						loading={loadingRef.current}
-						className="mb-8"
-						columnClassName="gap-3 sm:gap-4 lg:gap-6"
-						columns={{ xs: 2, sm: 3, md: 4, lg: 4, xl: 5, xxl: 6 }}
-						loadingIndicator={
-							<div className="inline-flex items-center px-4 py-2 mt-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full text-gray-600 shadow-sm">
-								<span className="w-4 h-4 mr-2 rounded-full border-2 border-plum-purple/20 border-t-plum-purple animate-spin"></span>
-								Loading more images...
-							</div>
-						}
-						emptyIndicator={
-							images.length > 0 ? (
-								<div className="text-center mt-16">
-									<div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
-										<h3 className="text-xl font-semibold text-gray-800 mb-2">
-											No images found
-										</h3>
-										<p className="text-gray-600 mb-4">
-											Try adjusting your search terms or filters.
-										</p>
-										<button
-											onClick={() => {
-												setSelectedDay(null);
-												if (showFavoritesOnly) setShowFavoritesOnly(false);
-											}}
-											className="bg-gradient-to-r from-plum-purple to-purple-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-medium">
-											Clear All Filters
-										</button>
-									</div>
-								</div>
-							) : loadingError ? (
-								<div className="text-center mt-16">
-									<div className="bg-white border border-red-200 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
-										<h3 className="text-xl font-semibold text-red-600 mb-2">
-											Error Loading Images
-										</h3>
-										<p className="text-gray-600 mb-4">{loadingError}</p>
-										<button
-											onClick={() => window.location.reload()}
-											className="bg-gradient-to-r from-plum-purple to-purple-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-medium">
-											Refresh Page
-										</button>
-									</div>
-								</div>
-							) : null
-						}
+						data={displayedImages}
+						isAdmin={isLoggedIn}
+						favorites={favorites}
+						selectedImages={selectedImages}
+						onFavoriteToggle={handleFavoriteToggle}
+						onSelect={handleImageSelect}
+						onImageClick={handleImageClick}
+						onDownload={handleDownload}
+						onUpdateImage={handleUpdateImage}
+						onDeleteImage={handleDeleteImage}
 					/>
+
+					{/* Load More Indicator */}
+					{filteredImages.length > displayedImages.length && (
+						<div className="text-center mt-8">
+							<div className="inline-flex items-center px-4 py-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full text-gray-600 shadow-sm">
+								Loading more images... ({displayedImages.length} of{" "}
+								{filteredImages.length})
+							</div>
+						</div>
+					)}
+
+					{/* No Results */}
+					{filteredImages.length === 0 && images.length > 0 && (
+						<div className="text-center mt-16">
+							<div className="bg-white border border-gray-200 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
+								<h3 className="text-xl font-semibold text-gray-800 mb-2">
+									No images found
+								</h3>
+								<p className="text-gray-600 mb-4">
+									Try adjusting your search terms or filters.
+								</p>
+								<button
+									onClick={() => {
+										setSelectedDay(null);
+										if (showFavoritesOnly) setShowFavoritesOnly(false);
+									}}
+									className="bg-gradient-to-r from-plum-purple to-purple-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-medium">
+									Clear All Filters
+								</button>
+							</div>
+						</div>
+					)}
 
 					{/* Lightbox */}
 					<Lightbox

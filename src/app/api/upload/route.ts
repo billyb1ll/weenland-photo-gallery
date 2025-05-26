@@ -66,6 +66,20 @@ export async function POST(request: NextRequest) {
 		// Update images.json file with new image data
 		await updateImagesJson(uploadResult);
 
+		// Clear the images cache to ensure fresh data is loaded
+		try {
+			await fetch(
+				`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/images`,
+				{
+					method: "POST",
+				}
+			);
+			console.log("Images cache cleared after upload");
+		} catch (error) {
+			console.error("Failed to clear images cache:", error);
+			// Don't fail the upload if cache clearing fails
+		}
+
 		return NextResponse.json({
 			success: true,
 			message: "อัปโหลดรูปภาพสำเร็จ",

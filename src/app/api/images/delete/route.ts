@@ -85,6 +85,20 @@ export async function DELETE(request: NextRequest) {
 		await fs.writeFile(srcImagesPath, jsonContent);
 		await fs.writeFile(publicImagesPath, jsonContent);
 
+		// Clear the images cache to ensure fresh data is loaded
+		try {
+			await fetch(
+				`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/images`,
+				{
+					method: "POST",
+				}
+			);
+			console.log("Images cache cleared after deletion");
+		} catch (error) {
+			console.error("Failed to clear images cache:", error);
+			// Don't fail the deletion if cache clearing fails
+		}
+
 		return NextResponse.json({
 			success: true,
 			message: "Image deleted successfully",

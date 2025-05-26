@@ -87,6 +87,20 @@ export async function GET() {
 		await fs.writeFile(srcImagesPath, jsonContent);
 		await fs.writeFile(publicImagesPath, jsonContent);
 
+		// Clear the images cache to ensure fresh data is loaded
+		try {
+			await fetch(
+				`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/images`,
+				{
+					method: "POST",
+				}
+			);
+			console.log("Images cache cleared after sync");
+		} catch (error) {
+			console.error("Failed to clear images cache:", error);
+			// Don't fail the sync if cache clearing fails
+		}
+
 		return NextResponse.json({
 			success: true,
 			message: `ซิงค์รูปภาพสำเร็จ พบรูปภาพรวม ${allImages.length} รูป (เก่า: ${existingImages.length}, ใหม่จาก GCS: ${newGcsImages.length})`,

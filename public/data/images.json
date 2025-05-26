@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "id": 250526301,
+    "thumbnailUrl": "https://storage.googleapis.com/weenland-gallery-images-2025/images/day-1/thumbnails/250526301-4_up_on_8_5_2568_BE_at_15_thumb.27__compiled_",
+    "fullUrl": "https://storage.googleapis.com/weenland-gallery-images-2025/images/day-1/full/250526301-4_up_on_8_5_2568_BE_at_15.27__compiled_",
+    "title": "4_up_on_8_5_2568_BE_at_15.27__compiled_",
+    "category": "uploaded",
+    "tags": [
+      "day-3",
+      "uploaded"
+    ],
+    "day": 1,
+    "uploadDate": "2025-05-26T10:27:47.916Z",
+    "gcsPath": "images/day-1/full/250526301-4_up_on_8_5_2568_BE_at_15.27__compiled_",
+    "isHighlight": true
+  }
+]

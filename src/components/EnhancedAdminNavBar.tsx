@@ -10,8 +10,15 @@ import {
 	EyeOff,
 	Settings,
 	BarChart3,
+	Zap,
+	HardDrive,
+	Activity,
+	Clock,
+	Gauge,
+	Trash2,
 } from "lucide-react";
 import DropZoneUpload from "./DropZoneUpload";
+import PerformanceGraph from "./PerformanceGraph";
 
 interface ImageData {
 	id: number;
@@ -32,6 +39,15 @@ interface EnhancedAdminNavBarProps {
 	images: ImageData[];
 	onImagesUpdate: () => void;
 	selectedDay: number | null;
+	optimizationInfo?: {
+		totalImages: number;
+		cachedImages: number;
+		memoryUsage?: number;
+		loadTime?: number;
+		imageLoadAvg?: number;
+		unloadedImages?: number;
+		renderTime?: number;
+	};
 }
 
 const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
@@ -41,6 +57,10 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 	images,
 	onImagesUpdate,
 	selectedDay,
+	optimizationInfo = {
+		totalImages: 0,
+		cachedImages: 0,
+	},
 }) => {
 	const [showLoginForm, setShowLoginForm] = useState(false);
 	const [credentials, setCredentials] = useState({ username: "", password: "" });
@@ -49,6 +69,65 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 	const [showDropZone, setShowDropZone] = useState(false);
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [showStats, setShowStats] = useState(false);
+	const [optimizationMode, setOptimizationMode] = useState<
+		"normal" | "aggressive"
+	>("normal");
+
+	// Register global optimization functions for large collections
+	useEffect(() => {
+		if (typeof window !== "undefined" && images.length > 5000) {
+			// Initialize the weenland global object if it doesn't exist
+			window.weenland = window.weenland || {};
+
+			// Register cleanup function
+			window.weenland.forceMemoryCleanup = () => {
+				if (typeof window.gc === "function") {
+					window.gc();
+					alert("Memory cleanup triggered");
+				} else if (
+					typeof (window as unknown as { CollectGarbage?: () => void })
+						.CollectGarbage === "function"
+				) {
+					(window as unknown as { CollectGarbage: () => void }).CollectGarbage();
+					alert("Memory cleanup triggered");
+				} else {
+					console.log("Attempting alternative memory cleanup");
+					// Alternative cleanup approach for browsers without explicit GC
+					const memoryHog: Array<Array<string>> = [];
+					try {
+						// Force memory pressure to trigger GC indirectly
+						for (let i = 0; i < 10000; i++) {
+							memoryHog.push(new Array(10000).fill("x"));
+						}
+					} catch {
+						// Ignore errors and continue
+						console.log("Created memory pressure for GC");
+					}
+					// Clear the array
+					memoryHog.length = 0;
+
+					alert("Alternative memory cleanup triggered");
+				}
+			};
+
+			// Register optimization mode toggle
+			window.weenland.toggleAggressiveOptimization = () => {
+				setOptimizationMode((current) => {
+					const newMode = current === "normal" ? "aggressive" : "normal";
+					alert(`Optimization mode set to: ${newMode}`);
+					return newMode;
+				});
+			};
+		}
+
+		return () => {
+			// Cleanup global functions when component unmounts
+			if (typeof window !== "undefined" && window.weenland) {
+				delete window.weenland.forceMemoryCleanup;
+				delete window.weenland.toggleAggressiveOptimization;
+			}
+		};
+	}, [images.length]);
 
 	// Check authentication status on component mount
 	useEffect(() => {
@@ -289,6 +368,11 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 										<span>{stats.total} images</span>
 										<span>•</span>
 										<span>{stats.recentUploads} recent</span>
+										{stats.total > 1000 && (
+											<span className="bg-yellow-400 text-purple-900 text-xs px-2 py-0.5 rounded-full font-medium">
+												{stats.total > 5000 ? "High Volume" : "Large Collection"}
+											</span>
+										)}
 									</div>
 								</div>
 							</div>
@@ -355,6 +439,140 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 									<div className="text-white/80 text-sm">Max per Day</div>
 								</div>
 							</div>
+
+							{stats.total > 500 && (
+								<div className="mt-4 bg-white/10 rounded-lg p-3 text-sm">
+									<div className="font-medium mb-1">Large Collection Optimizations</div>
+									<ul className="list-disc pl-5 text-white/80 space-y-1">
+										<li>Virtualized rendering for better performance</li>
+										<li>Pagination with 100 images per batch</li>
+										<li>API caching to reduce server load</li>
+										<li>Optimized image loading with abort controller</li>
+										{stats.total > 1000 && (
+											<>
+												<li>Memory management with automatic cleanup</li>
+												<li>Preloading of adjacent day images</li>
+											</>
+										)}
+									</ul>
+
+									{stats.total > 2000 && (
+										<>
+											<div className="mt-3 grid grid-cols-2 gap-2">
+												<div className="bg-white/10 rounded p-2">
+													<div className="text-xs text-white/70">Cached Images</div>
+													<div className="font-medium flex items-center gap-1">
+														<HardDrive size={14} />
+														{optimizationInfo.cachedImages}
+													</div>
+												</div>
+												<div className="bg-white/10 rounded p-2">
+													<div className="text-xs text-white/70">Memory Usage</div>
+													<div className="font-medium flex items-center gap-1">
+														<Zap size={14} />
+														{optimizationInfo.memoryUsage
+															? `${Math.round(optimizationInfo.memoryUsage)}%`
+															: "N/A"}
+													</div>
+												</div>
+												{optimizationInfo.loadTime && (
+													<div className="bg-white/10 rounded p-2">
+														<div className="text-xs text-white/70">Load Time</div>
+														<div className="font-medium flex items-center gap-1">
+															<Clock size={14} />
+															{optimizationInfo.loadTime}ms
+														</div>
+													</div>
+												)}
+												{optimizationInfo.renderTime && (
+													<div className="bg-white/10 rounded p-2">
+														<div className="text-xs text-white/70">Render Time</div>
+														<div className="font-medium flex items-center gap-1">
+															<Activity size={14} />
+															{optimizationInfo.renderTime}ms
+														</div>
+													</div>
+												)}
+											</div>
+
+											{/* Add the performance graph for visual metrics */}
+											{optimizationInfo.memoryUsage && (
+												<div className="mt-3">
+													<PerformanceGraph
+														memoryUsage={optimizationInfo.memoryUsage}
+														imageLoadTime={optimizationInfo.imageLoadAvg}
+														renderTime={optimizationInfo.renderTime}
+													/>
+												</div>
+											)}
+										</>
+									)}
+
+									{/* Optimization Controls for ultra-large collections */}
+									{stats.total > 5000 && (
+										<div className="mt-4 bg-white/10 rounded-lg p-3">
+											<div className="font-medium mb-2 flex items-center justify-between">
+												<span>Ultra-large Collection Controls</span>
+												<span className="text-xs bg-yellow-500 text-purple-900 px-2 py-0.5 rounded-full font-medium">
+													{stats.total > 10000 ? "Extreme" : "Ultra-large"}
+												</span>
+											</div>
+
+											<div className="grid grid-cols-2 gap-2 mt-2">
+												<button
+													onClick={() => {
+														// Trigger memory cleanup via the window object if implemented
+														if (
+															typeof window !== "undefined" &&
+															window.weenland?.forceMemoryCleanup
+														) {
+															window.weenland.forceMemoryCleanup();
+														} else {
+															alert("Memory cleanup function not available");
+														}
+													}}
+													className="bg-white/20 hover:bg-white/30 p-2 rounded text-xs flex items-center justify-center gap-1">
+													<Trash2 size={12} />
+													Force Memory Cleanup
+												</button>
+												<button
+													onClick={() => {
+														// Toggle aggressive optimization mode
+														if (
+															typeof window !== "undefined" &&
+															window.weenland?.toggleAggressiveOptimization
+														) {
+															window.weenland.toggleAggressiveOptimization();
+														} else {
+															alert("Optimization toggle not available");
+														}
+													}}
+													className={`p-2 rounded text-xs flex items-center justify-center gap-1 ${
+														optimizationMode === "aggressive"
+															? "bg-yellow-500/70 hover:bg-yellow-500/90 text-purple-900"
+															: "bg-white/20 hover:bg-white/30"
+													}`}>
+													<Gauge size={12} />
+													{optimizationMode === "aggressive"
+														? "Aggressive Mode ON"
+														: "Toggle Aggressive Mode"}
+												</button>
+											</div>
+
+											{optimizationInfo.unloadedImages !== undefined && (
+												<div className="mt-2 text-xs text-white/80 flex items-center justify-between">
+													<span>Unloaded images: {optimizationInfo.unloadedImages}</span>
+													{optimizationInfo.imageLoadAvg !== undefined && (
+														<span>
+															Avg. load time: {optimizationInfo.imageLoadAvg.toFixed(1)}ms
+														</span>
+													)}
+												</div>
+											)}
+										</div>
+									)}
+								</div>
+							)}
 						</div>
 					)}
 				</div>

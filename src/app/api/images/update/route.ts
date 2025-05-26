@@ -130,6 +130,20 @@ export async function PUT(request: NextRequest) {
 		await fs.writeFile(srcImagesPath, jsonContent);
 		await fs.writeFile(publicImagesPath, jsonContent);
 
+		// Clear the images cache to ensure fresh data is loaded
+		try {
+			await fetch(
+				`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/images`,
+				{
+					method: "POST",
+				}
+			);
+			console.log("Images cache cleared after update");
+		} catch (error) {
+			console.error("Failed to clear images cache:", error);
+			// Don't fail the update if cache clearing fails
+		}
+
 		return NextResponse.json({
 			success: true,
 			message:
