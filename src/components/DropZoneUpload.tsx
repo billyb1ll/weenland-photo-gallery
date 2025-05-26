@@ -7,15 +7,8 @@ import {
 	Image as ImageIcon,
 	Check,
 	AlertCircle,
-	Settings,
-	Zap,
 } from "lucide-react";
-import {
-	compressImage,
-	COMPRESSION_PRESETS,
-	formatFileSize,
-	getCompressionRatio,
-} from "@/lib/image-compressor";
+import { formatFileSize } from "@/lib/image-compressor";
 
 interface DropZoneUploadProps {
 	isOpen: boolean;
@@ -36,31 +29,6 @@ interface FilePreview {
 	compressionRatio?: string;
 }
 
-// Compression options with display names
-const compressionOptions = [
-	{
-		value: "HIGH",
-		label: "High Quality",
-		description: "90% quality, WebP format",
-	},
-	{
-		value: "MEDIUM",
-		label: "Medium Quality",
-		description: "75% quality, WebP format",
-	},
-	{
-		value: "LOW",
-		label: "Low Quality",
-		description: "60% quality, WebP format",
-	},
-	{
-		value: "STORAGE_OPTIMIZED",
-		label: "Storage Optimized",
-		description: "Balanced compression",
-	},
-	{ value: "NONE", label: "No Compression", description: "Original files" },
-];
-
 const DropZoneUpload: React.FC<DropZoneUploadProps> = ({
 	isOpen,
 	onClose,
@@ -71,12 +39,6 @@ const DropZoneUpload: React.FC<DropZoneUploadProps> = ({
 	const [selectedDay, setSelectedDay] = useState(currentDay);
 	const [files, setFiles] = useState<FilePreview[]>([]);
 	const [isUploading, setIsUploading] = useState(false);
-	const [compressionSetting, setCompressionSetting] = useState<string>("MEDIUM");
-	const [showCompressionSettings, setShowCompressionSettings] = useState(false);
-	const [totalSavings, setTotalSavings] = useState<{
-		original: number;
-		compressed: number;
-	}>({ original: 0, compressed: 0 });
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const handleDragOver = (e: DragEvent) => {
@@ -174,34 +136,6 @@ const DropZoneUpload: React.FC<DropZoneUploadProps> = ({
 		setIsDragOver(false);
 		setIsUploading(false);
 		onClose();
-	};
-
-	const handleCompression = async (preset: keyof typeof COMPRESSION_PRESETS) => {
-		if (files.length === 0) return;
-
-		setIsUploading(true);
-
-		try {
-			// Compress images
-			const compressionPromises = files.map((filePreview) =>
-				compressImage(filePreview.file, preset)
-			);
-			const compressedFiles = await Promise.all(compressionPromises);
-
-			// Update files state with compressed images
-			setFiles((prev) =>
-				prev.map((filePreview, index) => ({
-					...filePreview,
-					file: compressedFiles[index],
-					preview: URL.createObjectURL(compressedFiles[index]),
-					status: "pending",
-				}))
-			);
-		} catch (error) {
-			console.error("Compression error:", error);
-		} finally {
-			setIsUploading(false);
-		}
 	};
 
 	useEffect(() => {

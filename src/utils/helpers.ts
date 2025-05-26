@@ -25,7 +25,7 @@ export function generateId(): string {
 /**
  * Debounce function to limit the rate of function calls
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
 	func: T,
 	wait: number
 ): (...args: Parameters<T>) => void {
@@ -105,10 +105,22 @@ export function getUniqueTags(images: ImageData[]): string[] {
 }
 
 /**
- * Validate image file type
+ * Validate image file type - now supports all major image formats
  */
 export function isValidImageType(file: File): boolean {
-	const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+	const validTypes = [
+		"image/jpeg",
+		"image/jpg",
+		"image/png",
+		"image/webp",
+		"image/tiff",
+		"image/tif",
+		"image/bmp",
+		"image/gif",
+		"image/heic",
+		"image/heif",
+		"image/avif",
+	];
 	return validTypes.includes(file.type);
 }
 

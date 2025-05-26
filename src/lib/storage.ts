@@ -66,33 +66,63 @@ export async function uploadImageToGCS(
 		const extension = path.extname(cleanName) || ".jpg";
 		const baseName = path.basename(cleanName, extension);
 
-		// Create file paths using the new ID format
-		const fullImagePath = `images/day-${day}/full/${newId}-${baseName}${extension}`;
-		const thumbnailPath = `images/day-${day}/thumbnails/${newId}-${baseName}_thumb${extension}`;
+		// Process images with Sharp to preserve maximum quality
+		// Determine the best format to preserve quality
+		const metadata = await sharp(imageBuffer).metadata();
 
-		// Process images with Sharp
-		// Keep original image without resizing, only optimize if it's not already optimized
-		const fullImage = await sharp(imageBuffer)
-			.jpeg({ quality: 100, progressive: true }) // Maximum quality, progressive loading
-			.toBuffer();
+		let fullImage: Buffer;
+		let outputExtension: string;
+		let contentType: string;
 
+		if (metadata.format === "png" && metadata.hasAlpha) {
+			// Preserve PNG with transparency at maximum quality
+			fullImage = await sharp(imageBuffer)
+				.png({ quality: 100, compressionLevel: 0 }) // No compression
+				.toBuffer();
+			outputExtension = ".png";
+			contentType = "image/png";
+		} else if (metadata.format === "webp") {
+			// Preserve WebP at maximum quality
+			fullImage = await sharp(imageBuffer)
+				.webp({ quality: 100, lossless: true }) // Lossless WebP
+				.toBuffer();
+			outputExtension = ".webp";
+			contentType = "image/webp";
+		} else {
+			// Convert to highest quality JPEG with minimal compression
+			fullImage = await sharp(imageBuffer)
+				.jpeg({ quality: 100, progressive: true, mozjpeg: true }) // Maximum quality
+				.toBuffer();
+			outputExtension = ".jpg";
+			contentType = "image/jpeg";
+		}
+
+		// Create optimized thumbnail (can be compressed since it's just for display)
 		const thumbnail = await sharp(imageBuffer)
 			.resize(400, 300, {
 				fit: "cover",
+				withoutEnlargement: true, // Don't upscale small images
 			})
-			.jpeg({ quality: 80 })
+			.jpeg({ quality: 85 })
 			.toBuffer();
+
+		// Create file paths using the determined extension
+		const fullImagePath = `images/day-${day}/full/${newId}-${baseName}${outputExtension}`;
+		const thumbnailPath = `images/day-${day}/thumbnails/${newId}-${baseName}_thumb.jpg`;
 
 		// Upload full image
 		const fullImageFile = bucket.file(fullImagePath);
 		await fullImageFile.save(fullImage, {
 			metadata: {
-				contentType: "image/jpeg",
+				contentType: contentType,
 				metadata: {
 					originalName,
 					day: day.toString(),
 					uploadDate: new Date().toISOString(),
-					quality: "original", // Mark as original quality
+					quality: "maximum", // Mark as maximum quality
+					format: metadata.format || "unknown",
+					originalSize: imageBuffer.length.toString(),
+					processedSize: fullImage.length.toString(),
 				},
 			},
 			public: true, // Make files publicly accessible

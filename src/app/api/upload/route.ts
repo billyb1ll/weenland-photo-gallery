@@ -32,14 +32,12 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Validate file size (max 10MB)
-		const maxSize = 10 * 1024 * 1024; // 10MB
-		if (file.size > maxSize) {
-			return NextResponse.json(
-				{ error: "ขนาดไฟล์ต้องไม่เกิน 10MB" },
-				{ status: 400 }
-			);
-		}
+		// No file size limit - allow full quality uploads
+		console.log(
+			`📁 Uploading image: ${file.name} (${(file.size / 1024 / 1024).toFixed(
+				2
+			)}MB)`
+		);
 
 		// Convert file to buffer
 		const arrayBuffer = await file.arrayBuffer();
@@ -62,6 +60,11 @@ export async function POST(request: NextRequest) {
 			day,
 			existingImages
 		);
+
+		// Override the upload result with user-provided metadata
+		uploadResult.title = title || uploadResult.title;
+		uploadResult.category = category;
+		uploadResult.tags = tags;
 
 		// Update images.json file with new image data
 		await updateImagesJson(uploadResult);

@@ -8,12 +8,12 @@ export const APP_CONFIG = {
 
 // Image processing constants
 export const IMAGE_CONFIG = {
-	THUMBNAIL_SIZE: 300,
-	MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
-	SUPPORTED_FORMATS: ["jpg", "jpeg", "png", "webp"],
+	THUMBNAIL_SIZE: 400,
+	MAX_FILE_SIZE: Number.MAX_SAFE_INTEGER, // No file size limit
+	SUPPORTED_FORMATS: ["jpg", "jpeg", "png", "webp", "tiff", "bmp"],
 	QUALITY: {
-		THUMBNAIL: 80,
-		FULL_SIZE: 90,
+		THUMBNAIL: 85,
+		FULL_SIZE: 100, // Maximum quality - no compression
 	},
 } as const;
 

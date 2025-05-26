@@ -12,14 +12,15 @@ export interface CompressionOptions {
 }
 
 export const COMPRESSION_PRESETS = {
-	HIGH: { quality: 0.9, format: "webp" } as CompressionOptions,
+	ORIGINAL: { quality: 1.0, format: "png" } as CompressionOptions, // Maximum quality, no compression
+	HIGH: { quality: 0.95, format: "webp" } as CompressionOptions,
 	MEDIUM: { quality: 0.75, format: "webp" } as CompressionOptions,
 	LOW: { quality: 0.6, format: "webp" } as CompressionOptions,
 	THUMBNAIL: {
-		quality: 0.7,
+		quality: 0.85,
 		maxWidth: 400,
 		maxHeight: 400,
-		format: "webp",
+		format: "jpeg",
 	} as CompressionOptions,
 	STORAGE_OPTIMIZED: { quality: 0.75, format: "webp" } as CompressionOptions,
 };
