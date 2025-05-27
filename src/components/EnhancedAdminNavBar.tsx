@@ -18,6 +18,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import DropZoneUpload from "./DropZoneUpload";
+import BulkUploadDropZone from "./BulkUploadDropZone";
 import PerformanceGraph from "./PerformanceGraph";
 
 interface ImageData {
@@ -67,6 +68,7 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const [showDropZone, setShowDropZone] = useState(false);
+	const [showBulkUpload, setShowBulkUpload] = useState(false);
 	const [isSyncing, setIsSyncing] = useState(false);
 	const [showStats, setShowStats] = useState(false);
 	const [optimizationMode, setOptimizationMode] = useState<
@@ -261,7 +263,7 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 							<User size={24} className="text-white" />
 						</div>
 						<h2 className="text-2xl font-bold text-gray-800">Admin Login</h2>
-						<p className="text-gray-600">เข้าสู่ระบบจัดการรูปภาพ</p>
+						<p className="text-gray-600">Picture Management System</p>
 					</div>
 
 					<form onSubmit={handleLogin} className="space-y-4">
@@ -275,7 +277,7 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 								onChange={(e) =>
 									setCredentials({ ...credentials, username: e.target.value })
 								}
-								className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-plum-purple focus:border-transparent transition-all duration-200"
+								className="w-full px-4 py-3 border text-black border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-plum-purple focus:border-transparent transition-all duration-200"
 								placeholder="Enter username"
 								required
 							/>
@@ -292,14 +294,14 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 									onChange={(e) =>
 										setCredentials({ ...credentials, password: e.target.value })
 									}
-									className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-plum-purple focus:border-transparent transition-all duration-200 pr-12"
+									className="w-full px-4 py-3 border text-black border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-plum-purple focus:border-transparent transition-all duration-200 pr-12"
 									placeholder="Enter password"
 									required
 								/>
 								<button
 									type="button"
 									onClick={() => setShowPassword(!showPassword)}
-									className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+									className="absolute right-3 inset-y-0 my-auto h-fit flex items-center text-gray-400 hover:text-gray-600 transition-colors">
 									{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
 								</button>
 							</div>
@@ -393,6 +395,13 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 								className="bg-green-500/90 hover:bg-green-600 px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-lg">
 								<Upload size={16} />
 								<span className="hidden sm:inline">Upload Images</span>
+							</button>
+
+							<button
+								onClick={() => setShowBulkUpload(true)}
+								className="bg-purple-500/90 hover:bg-purple-600 px-4 py-2 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium shadow-lg">
+								<HardDrive size={16} />
+								<span className="hidden sm:inline">Bulk Upload</span>
 							</button>
 
 							<button
@@ -600,6 +609,13 @@ const EnhancedAdminNavBar: React.FC<EnhancedAdminNavBarProps> = ({
 				isOpen={showDropZone}
 				onClose={() => setShowDropZone(false)}
 				onUpload={handleBulkUpload}
+				currentDay={selectedDay || 1}
+			/>
+
+			{/* Bulk Upload Modal */}
+			<BulkUploadDropZone
+				isOpen={showBulkUpload}
+				onClose={() => setShowBulkUpload(false)}
 				currentDay={selectedDay || 1}
 			/>
 		</>

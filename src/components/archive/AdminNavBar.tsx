@@ -254,7 +254,7 @@ const AdminNavBar: React.FC<AdminNavBarProps> = ({
 							<User size={24} className="text-white" />
 						</div>
 						<h2 className="text-2xl font-bold text-gray-800">Admin Login</h2>
-						<p className="text-gray-600">เข้าสู่ระบบจัดการรูปภาพ</p>
+						<p className="text-gray-600">Picture Management</p>
 					</div>
 
 					<form onSubmit={handleLogin} className="space-y-4">
@@ -268,7 +268,7 @@ const AdminNavBar: React.FC<AdminNavBarProps> = ({
 								onChange={(e) =>
 									setCredentials({ ...credentials, username: e.target.value })
 								}
-								className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-plum-purple focus:border-transparent transition-all duration-200"
+								className="w-full px-4 text-black py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-plum-purple focus:border-transparent transition-all duration-200"
 								placeholder="Enter username"
 								required
 							/>

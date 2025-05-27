@@ -231,12 +231,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 						</div>
 					</form>
 
-					<div className="mt-6 p-4 bg-gray-50 rounded-xl">
-						<p className="text-xs text-gray-600 text-center">
-							Demo credentials: <br />
-							<span className="font-mono">admin / weenland2024</span>
-						</p>
-					</div>
+					
 				</div>
 			</div>
 		);
