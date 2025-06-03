@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import GalleryCard from "@/components/GalleryCard";
 import AdminGalleryCard from "@/components/AdminGalleryCard";
-import Lightbox from "@/components/Lightbox";
+import Lightbox from "@/components/OptimizedLightbox";
 import DayNavigationWithFeatures from "@/components/DayNavigationWithFeatures";
-import EnhancedAdminNavBar from "@/components/EnhancedAdminNavBar";
+import OptimizedAdminNavBar from "@/components/OptimizedAdminNavBar";
 import LoadingPopup from "@/components/LoadingPopup";
 import VirtualizedGrid from "@/components/VirtualizedGrid";
+import SearchFilterBar from "@/components/SearchFilterBar";
 import { preloadImageBatch, clearPreloadCache } from "@/lib/image-preloader";
 import {
 	trackImageUsage,
@@ -22,10 +23,25 @@ interface ImageData {
 	thumbnailUrl: string;
 	fullUrl: string;
 	title: string;
-	category?: string;
-	tags?: string[];
 	day?: number;
 	uploadDate?: string;
+	isHighlight?: boolean;
+	filename?: string; // For filename-based operations
+}
+
+interface ImageDataByFilename {
+	filename: string;
+	thumbnailUrl: string;
+	fullUrl: string;
+	title: string;
+	day: number;
+	uploadDate: string;
+	gcsPath: string;
+	originalSize?: number;
+	dimensions?: {
+		width: number;
+		height: number;
+	};
 	isHighlight?: boolean;
 }
 
@@ -51,6 +67,13 @@ export default function Home() {
 		cachedImages: 0,
 		memoryUsage: 0,
 	});
+	const [searchQuery, setSearchQuery] = useState("");
+	const [batchMode, setBatchMode] = useState(false);
+	const [slideshowMode, setSlideshowMode] = useState(false);
+	const [slideshowInterval, setSlideshowInterval] = useState(5000); // 5 seconds
+	const [sortOrder, setSortOrder] = useState<
+		"date-newest" | "date-oldest" | "name-asc" | "name-desc"
+	>("date-newest");
 
 	// References for optimization
 	const loadingRef = useRef(false);
@@ -60,6 +83,62 @@ export default function Home() {
 
 	// Reference for caching day images to avoid redundant fetches
 	const dayImagesCache = useRef<Record<number, ImageData[]>>({});
+
+	// Helper function to determine if data is filename-based
+	const isFilenameBasedData = useCallback((data: unknown[]): boolean => {
+		if (!Array.isArray(data) || data.length === 0) return false;
+		const firstItem = data[0] as Record<string, unknown>;
+		return (
+			typeof firstItem.filename === "string" &&
+			typeof firstItem.gcsPath === "string" &&
+			!firstItem.hasOwnProperty("id")
+		);
+	}, []);
+
+	// Helper function to convert filename-based data to ID-based format for frontend compatibility
+	const convertFilenameDataToImageData = useCallback(
+		(filenameData: ImageDataByFilename[]): ImageData[] => {
+			return filenameData.map((item, index) => ({
+				id: index + 1, // Generate sequential IDs for frontend
+				thumbnailUrl: item.thumbnailUrl,
+				fullUrl: item.fullUrl,
+				title: item.title,
+				day: item.day,
+				uploadDate: item.uploadDate,
+				isHighlight: item.isHighlight,
+				filename: item.filename, // Keep filename for backend operations
+			}));
+		},
+		[]
+	);
+
+	// Helper function to process API response data (handles both formats)
+	const processImageData = useCallback(
+		(data: { images: unknown[]; [key: string]: unknown }): ImageData[] => {
+			if (!data.images || !Array.isArray(data.images)) {
+				return [];
+			}
+
+			// Check if data is filename-based and convert if needed
+			if (isFilenameBasedData(data.images)) {
+				console.log(
+					"Processing filename-based data, converting to ID format for frontend"
+				);
+				return convertFilenameDataToImageData(data.images as ImageDataByFilename[]);
+			}
+
+			// Process ID-based data normally
+			return data.images.map((img: unknown) => {
+				const imageData = img as ImageData;
+				return {
+					...imageData,
+					day: imageData.day || 1,
+					uploadDate: imageData.uploadDate || new Date().toISOString(),
+				};
+			});
+		},
+		[isFilenameBasedData, convertFilenameDataToImageData]
+	);
 
 	// Load favorites from cookies on mount
 	useEffect(() => {
@@ -102,8 +181,35 @@ export default function Home() {
 			filtered = filtered.filter((img) => favorites.has(img.id));
 		}
 
+		// Filter by search query
+		if (searchQuery.trim()) {
+			const lowercaseQuery = searchQuery.toLowerCase().trim();
+			filtered = filtered.filter((image) => {
+				// Search by title
+				if (image.title && image.title.toLowerCase().includes(lowercaseQuery))
+					return true;
+
+				// Search by filename
+				if (image.filename && image.filename.toLowerCase().includes(lowercaseQuery))
+					return true;
+
+				// Search by date
+				if (
+					image.uploadDate &&
+					image.uploadDate.toLowerCase().includes(lowercaseQuery)
+				)
+					return true;
+
+				// Search by day
+				if (image.day !== undefined && `day ${image.day}`.includes(lowercaseQuery))
+					return true;
+
+				return false;
+			});
+		}
+
 		setFilteredImages(filtered);
-	}, [images, selectedDay, showFavoritesOnly, favorites]);
+	}, [images, selectedDay, showFavoritesOnly, favorites, searchQuery]);
 
 	// Load more images from server with better error handling and abort controller
 	const loadMoreImages = useCallback(async () => {
@@ -136,11 +242,7 @@ export default function Home() {
 
 			if (response.ok) {
 				const data = await response.json();
-				const newImages = data.images.map((img: ImageData) => ({
-					...img,
-					day: img.day || 1,
-					uploadDate: img.uploadDate || new Date().toISOString(),
-				}));
+				const newImages = processImageData(data);
 
 				setImages((prev) => {
 					// Filter out duplicates (by id)
@@ -172,7 +274,7 @@ export default function Home() {
 			loadingRef.current = false;
 			abortControllerRef.current = null;
 		}
-	}, [currentPage, hasMore, selectedDay]);
+	}, [currentPage, hasMore, selectedDay, processImageData]);
 
 	// Initialize images by fetching from API with pagination
 	useEffect(() => {
@@ -257,6 +359,7 @@ export default function Home() {
 		)
 	).sort((a, b) => a - b);
 
+	// Handle favorite toggle
 	const handleFavoriteToggle = (id: number) => {
 		setFavorites((prev) => {
 			const newFavorites = new Set(prev);
@@ -402,6 +505,14 @@ export default function Home() {
 		setShowFavoritesOnly((prev) => !prev);
 	};
 
+	// Handle search input change
+	const handleSearchChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			setSearchQuery(e.target.value);
+		},
+		[]
+	);
+
 	// Handle day navigation
 	const handleDaySelect = (day: number | null) => {
 		// Abort any ongoing preloading
@@ -411,6 +522,38 @@ export default function Home() {
 		}
 
 		setSelectedDay(day);
+	};
+
+	// Handle sort change
+	const handleSortChange = (
+		sort: "date-newest" | "date-oldest" | "name-asc" | "name-desc"
+	) => {
+		// Update the sort order state
+		setSortOrder(sort);
+
+		// Create a copy of filtered images and sort
+		const sortedImages = [...filteredImages];
+
+		switch (sort) {
+			case "date-newest":
+				sortedImages.sort((a, b) =>
+					(b.uploadDate || "").localeCompare(a.uploadDate || "")
+				);
+				break;
+			case "date-oldest":
+				sortedImages.sort((a, b) =>
+					(a.uploadDate || "").localeCompare(b.uploadDate || "")
+				);
+				break;
+			case "name-asc":
+				sortedImages.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+				break;
+			case "name-desc":
+				sortedImages.sort((a, b) => (b.title || "").localeCompare(a.title || ""));
+				break;
+		}
+
+		setFilteredImages(sortedImages);
 	};
 
 	// Preload images for adjacent days
@@ -593,27 +736,36 @@ export default function Home() {
 		}
 	};
 
-	// Admin image management functions
+	// Admin image management functions with dual-format support
 	const handleUpdateImage = async (
 		id: number,
 		updates: {
 			day?: number;
 			title?: string;
-			category?: string;
-			tags?: string[];
 			isHighlight?: boolean;
 		}
 	) => {
 		try {
+			// First, check if we have filename for this image
+			const image = images.find((img) => img.id === id);
+			const useFilename = image?.filename;
+
 			const response = await fetch("/api/images/update", {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({
-					imageId: id,
-					...updates,
-				}),
+				body: JSON.stringify(
+					useFilename
+						? {
+								filename: useFilename,
+								...updates,
+						  }
+						: {
+								imageId: id,
+								...updates,
+						  }
+				),
 			});
 
 			if (response.ok) {
@@ -639,14 +791,24 @@ export default function Home() {
 		}
 
 		try {
+			// First, check if we have filename for this image
+			const image = images.find((img) => img.id === id);
+			const useFilename = image?.filename;
+
 			const response = await fetch("/api/images/delete", {
 				method: "DELETE",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({
-					imageId: id,
-				}),
+				body: JSON.stringify(
+					useFilename
+						? {
+								filename: useFilename,
+						  }
+						: {
+								imageId: id,
+						  }
+				),
 			});
 
 			if (response.ok) {
@@ -720,7 +882,7 @@ export default function Home() {
 			</div>
 
 			{/* Admin Navigation Bar */}
-			<EnhancedAdminNavBar
+			<OptimizedAdminNavBar
 				isLoggedIn={isLoggedIn}
 				onLogin={handleAdminLogin}
 				onLogout={handleAdminLogout}
@@ -771,6 +933,33 @@ export default function Home() {
 						/>
 					</div>
 
+					{/* Search and Filter Bar */}
+					<div className="animate-fade-in-up mb-8">
+						<SearchFilterBar
+							onSearch={(query) => setSearchQuery(query)}
+							onFilterDay={(day) => setSelectedDay(day)}
+							onSortChange={handleSortChange}
+							searchQuery={searchQuery}
+							onSearchChange={handleSearchChange}
+							showFavoritesOnly={showFavoritesOnly}
+							onToggleFavorites={handleToggleFavorites}
+							selectedDay={selectedDay}
+							availableDays={availableDays}
+							onDaySelect={handleDaySelect}
+							imageCountsByDay={imageCountsByDay}
+							isLoggedIn={isLoggedIn}
+							onBatchModeToggle={setBatchMode}
+							batchMode={batchMode}
+							onSlideshowModeToggle={setSlideshowMode}
+							slideshowMode={slideshowMode}
+							slideshowInterval={slideshowInterval}
+							onSlideshowIntervalChange={setSlideshowInterval}
+							totalImages={totalImages}
+							filteredCount={filteredImages.length}
+							sortOrder={sortOrder}
+						/>
+					</div>
+
 					{/* Virtualized Gallery Grid */}
 					<VirtualizedGrid
 						items={filteredImages}
@@ -817,6 +1006,27 @@ export default function Home() {
 						className="mb-8"
 						columnClassName="gap-3 sm:gap-4 lg:gap-6"
 						columns={{ xs: 2, sm: 3, md: 4, lg: 4, xl: 5, xxl: 6 }}
+						// Enhanced image viewer integration
+						enableImageViewer={true}
+						onImageClick={(image) => {
+							// Track image usage for memory management
+							trackImageUsage(image.thumbnailUrl, 3);
+							trackImageUsage(image.fullUrl, 3);
+
+							// Trigger memory cleanup if we have too many images
+							if (filteredImages.length > 1000) {
+								setTimeout(() => unloadUnusedImages(), 500);
+							}
+
+							// Open lightbox
+							setLightboxImageId(image.id);
+						}}
+						imageViewerKeyExtractor={{
+							id: (image) => image.id,
+							thumbnailUrl: (image) => image.thumbnailUrl,
+							fullUrl: (image) => image.fullUrl,
+							title: (image) => image.title,
+						}}
 						loadingIndicator={
 							<div className="inline-flex items-center px-4 py-2 mt-4 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full text-gray-600 shadow-sm">
 								<span className="w-4 h-4 mr-2 rounded-full border-2 border-plum-purple/20 border-t-plum-purple animate-spin"></span>
@@ -867,6 +1077,7 @@ export default function Home() {
 						imageId={lightboxImageId}
 						images={filteredImages}
 						onClose={() => setLightboxImageId(null)}
+						onNavigate={(newImageId) => setLightboxImageId(newImageId)}
 						onDownload={handleDownload}
 					/>
 

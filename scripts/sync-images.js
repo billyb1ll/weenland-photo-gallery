@@ -32,9 +32,9 @@ async function listImagesFromGCS() {
 
         const images = [];
 
-        // Filter only full images (not thumbnails)
+        // Filter only full images (not thumbnails) - support both /full/ and /originals/ paths
         const fullImages = files.filter(
-            (file) => file.name.includes("/full/") && !file.name.endsWith("/")
+            (file) => (file.name.includes("/full/") || file.name.includes("/originals/")) && !file.name.endsWith("/")
         );
 
         for (const file of fullImages) {
@@ -46,10 +46,20 @@ async function listImagesFromGCS() {
                 const dayMatch = file.name.match(/day-(\d+)/);
                 const day = dayMatch ? parseInt(dayMatch[1]) : 1;
 
-                // Generate thumbnail path
-                const thumbnailPath = file.name
-                    .replace("/full/", "/thumbnails/")
-                    .replace(/(\.[^.]+)$/, "_thumb$1");
+                // Generate thumbnail path - handle both /full/ and /originals/ structures
+                let thumbnailPath;
+                if (file.name.includes("/full/")) {
+                    thumbnailPath = file.name
+                        .replace("/full/", "/thumbnails/")
+                        .replace(/(\.[^.]+)$/, "_thumb.jpg"); // Force .jpg for thumbnails
+                } else if (file.name.includes("/originals/")) {
+                    thumbnailPath = file.name
+                        .replace("/originals/", "/thumbnails/")
+                        .replace(/(\.[^.]+)$/, "_thumb.jpg"); // Force .jpg for thumbnails
+                } else {
+                    // Fallback: assume it's in a full-like structure
+                    thumbnailPath = file.name.replace(/(\.[^.]+)$/, "_thumb.jpg"); // Force .jpg for thumbnails
+                }
 
                 const fullUrl = `https://storage.googleapis.com/${bucketName}/${file.name}`;
                 const thumbnailUrl = `https://storage.googleapis.com/${bucketName}/${thumbnailPath}`;

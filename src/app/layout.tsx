@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./grid-fixes.css";
 import "./safari-fixes.css";
 import "./safari-gallery-fixes.css";
+import "./lightbox-fixes.css";
 
 const inter = Inter({
 	subsets: ["latin"],
@@ -22,7 +24,11 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
-			<body className={`${inter.variable} font-sans antialiased`}>{children}</body>
+			<body
+				className={`${inter.variable} font-sans antialiased`}
+				suppressHydrationWarning>
+				{children}
+			</body>
 		</html>
 	);
 }

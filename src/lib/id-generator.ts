@@ -86,7 +86,7 @@ export function generateDateBasedId(
  * @param id - ID in YYMMDD[day]## format
  * @returns Parsed date information or null if invalid format
  */
-export function parseDateBasedId(id: number): {
+export function parseDateBasedId(id: number | undefined): {
 	year: number;
 	month: number;
 	day: number;
@@ -94,6 +94,11 @@ export function parseDateBasedId(id: number): {
 	sequential: number;
 	date: Date;
 } | null {
+	// Handle undefined or null values
+	if (id === undefined || id === null) {
+		return null;
+	}
+
 	const idStr = id.toString();
 
 	// Validate format: should be 9 digits
@@ -149,7 +154,10 @@ export function parseDateBasedId(id: number): {
  * @param id - ID to check
  * @returns true if ID is in YYMMDD[day]## format
  */
-export function isDateBasedId(id: number): boolean {
+export function isDateBasedId(id: number | undefined): boolean {
+	if (id === undefined || id === null) {
+		return false;
+	}
 	return parseDateBasedId(id) !== null;
 }
 
@@ -205,7 +213,18 @@ export function migrateToDateBasedIds(
 	});
 
 	for (const image of sortedImages) {
-		// Skip if already using date-based ID
+		// Skip if already using date-based ID or if ID is missing
+		if (!image.id) {
+			// Generate a new ID for images without an ID
+			const uploadDate = new Date(image.uploadDate || new Date());
+			const newId = generateDateBasedId(migratedImages, galleryDay, uploadDate);
+			migratedImages.push({
+				...image,
+				id: newId,
+			});
+			continue;
+		}
+
 		if (isDateBasedId(image.id)) {
 			migratedImages.push(image);
 			continue;

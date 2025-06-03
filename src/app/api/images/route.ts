@@ -8,12 +8,25 @@ interface ImageData {
 	thumbnailUrl: string;
 	fullUrl: string;
 	title: string;
-	category?: string;
-	tags?: string[];
 	day?: number;
 	uploadDate?: string;
 	gcsPath?: string;
 	isHighlight?: boolean;
+}
+
+interface ImageDataByFilename {
+	filename: string;
+	thumbnailUrl: string;
+	fullUrl: string;
+	title: string;
+	day: number;
+	uploadDate: string;
+	gcsPath: string;
+	originalSize?: number;
+	dimensions?: {
+		width: number;
+		height: number;
+	};
 }
 
 // Server-side LRU cache for images data
@@ -48,11 +61,9 @@ const resultCache = new LRUCache<
  * - page (default: 1): The page number to retrieve
  * - limit (default: 100): Number of images per page
  * - day (optional): Filter by specific day
- * - category (optional): Filter by category
- * - tags (optional): Filter by tags, comma-separated
  * - sortBy (optional): Field to sort by (date, id, day)
  * - sortOrder (optional): Sort direction (asc, desc)
- * - search (optional): Search query for title, category, tags
+ * - search (optional): Search query for title
  */
 export async function GET(request: NextRequest) {
 	try {
@@ -62,11 +73,8 @@ export async function GET(request: NextRequest) {
 		const day = searchParams.get("day")
 			? parseInt(searchParams.get("day")!)
 			: null;
-		const category = searchParams.get("category");
-		const tags = searchParams.get("tags")?.split(",");
 		const sortBy = searchParams.get("sortBy") || "date"; // date, id, day
 		const sortOrder = searchParams.get("sortOrder") || "desc"; // asc, desc
-		const search = searchParams.get("search") || "";
 
 		// Cache control for better performance
 		const cacheControl = request.headers.get("cache-control") || "";
@@ -108,7 +116,22 @@ export async function GET(request: NextRequest) {
 			// Cache miss, read from file
 			try {
 				const fileContent = await fs.readFile(srcImagesPath, "utf8");
-				allImages = JSON.parse(fileContent);
+				const rawData = JSON.parse(fileContent);
+
+				// Detect data format and convert if necessary
+				if (isFilenameBasedData(rawData)) {
+					// Convert filename-based data to ID-based format
+					allImages = convertFilenameDataToIdBased(rawData);
+					console.log(
+						`Converted ${allImages.length} filename-based images to ID format`
+					);
+				} else if (Array.isArray(rawData)) {
+					// Already in ID-based format
+					allImages = rawData as ImageData[];
+				} else {
+					console.warn("Unknown data format in images.json, treating as empty");
+					allImages = [];
+				}
 
 				// Update the cache
 				imagesCache.set(cacheImageKey, {
@@ -132,36 +155,11 @@ export async function GET(request: NextRequest) {
 			filteredImages = filteredImages.filter((img) => img.day === day);
 		}
 
-		// Filter by category
-		if (category) {
-			filteredImages = filteredImages.filter(
-				(img) => img.category?.toLowerCase() === category.toLowerCase()
-			);
-		}
-
-		// Filter by tags
-		if (tags && tags.length > 0) {
-			filteredImages = filteredImages.filter((img) =>
-				tags.some((tag) => img.tags?.includes(tag))
-			);
-		}
-
-		// Filter by search term
-		if (search) {
-			const searchLower = search.toLowerCase();
-			filteredImages = filteredImages.filter(
-				(img) =>
-					img.title?.toLowerCase().includes(searchLower) ||
-					img.category?.toLowerCase().includes(searchLower) ||
-					img.tags?.some((tag) => tag.toLowerCase().includes(searchLower))
-			);
-		}
-
 		// Sort images based on parameters
 		filteredImages.sort((a, b) => {
 			// Determine which fields to compare based on sortBy
-			let valueA: any;
-			let valueB: any;
+			let valueA: number;
+			let valueB: number;
 
 			switch (sortBy) {
 				case "id":
@@ -245,4 +243,50 @@ export async function POST() {
 		console.error("Error clearing cache:", error);
 		return NextResponse.json({ error: "Failed to clear cache" }, { status: 500 });
 	}
+}
+
+/**
+ * Convert filename-based data structure to ID-based format for backward compatibility
+ */
+function convertFilenameDataToIdBased(
+	filenameData: Record<string, ImageDataByFilename>
+): ImageData[] {
+	return Object.values(filenameData).map((item, index) => ({
+		id: index + 1, // Generate sequential IDs for display
+		thumbnailUrl: item.thumbnailUrl,
+		fullUrl: item.fullUrl,
+		title: item.title,
+		day: item.day,
+		uploadDate: item.uploadDate,
+		gcsPath: item.gcsPath,
+	}));
+}
+
+/**
+ * Detect if the data structure is filename-based or ID-based
+ */
+function isFilenameBasedData(
+	data: unknown
+): data is Record<string, ImageDataByFilename> {
+	if (!data || typeof data !== "object") return false;
+
+	// Check if it's an array (ID-based) or object with filename keys
+	if (Array.isArray(data)) return false;
+
+	// Check if the keys look like filenames and values have filename property
+	const keys = Object.keys(data as Record<string, unknown>);
+	if (keys.length === 0) return false;
+
+	const firstKey = keys[0];
+	const firstValue = (data as Record<string, unknown>)[firstKey];
+
+	return (
+		typeof firstKey === "string" &&
+		firstKey.includes(".") && // Likely a filename with extension
+		firstValue !== null &&
+		firstValue !== undefined &&
+		typeof firstValue === "object" &&
+		"filename" in firstValue &&
+		"gcsPath" in firstValue
+	);
 }

@@ -1,0 +1,180 @@
+/* ===== LIGHTBOX CURSOR & INTERACTION FIXES ===== */
+
+/* Lightbox container cursor reset */
+[role="dialog"][aria-modal="true"] {
+    cursor: default !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Image container cursor control with high specificity */
+.lightbox-image-container {
+    /* Override any global cursor rules */
+    cursor: default !important;
+    pointer-events: auto !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    user-select: none !important;
+}
+
+/* When zoomed in, ensure grab cursor works */
+.lightbox-image-container[data-zoom-greater="1"]:not([data-dragging="true"]) {
+    cursor: grab !important;
+}
+
+.lightbox-image-container[data-dragging="true"] {
+    cursor: grabbing !important;
+}
+
+/* Ensure image itself doesn't interfere with cursor */
+.lightbox-image-container img {
+    pointer-events: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    cursor: inherit !important;
+    -webkit-user-drag: none !important;
+    -moz-user-drag: none !important;
+}
+
+/* Button cursor override */
+[role="dialog"][aria-modal="true"] button {
+    cursor: pointer !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    user-select: none !important;
+    pointer-events: auto !important;
+}
+
+/* Prevent text selection in lightbox except specific elements */
+[role="dialog"][aria-modal="true"] * {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+}
+
+/* Allow text selection only in specific elements */
+[role="dialog"][aria-modal="true"] h1,
+[role="dialog"][aria-modal="true"] h2,
+[role="dialog"][aria-modal="true"] h3,
+[role="dialog"][aria-modal="true"] p,
+[role="dialog"][aria-modal="true"] span {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    user-select: text !important;
+    cursor: text !important;
+}
+
+/* Prevent drag on all lightbox elements */
+[role="dialog"][aria-modal="true"] * {
+    -webkit-user-drag: none !important;
+    -moz-user-drag: none !important;
+}
+
+/* Override global CSS that might interfere with transforms */
+[role="dialog"][aria-modal="true"] *:not(.lightbox-image-container) {
+    -webkit-transform: none !important;
+    transform: none !important;
+}
+
+/* Re-enable transform only for the image container */
+.lightbox-image-container {
+    -webkit-transform: unset !important;
+    transform: unset !important;
+    will-change: transform !important;
+}
+
+/* Mobile touch optimizations */
+@media (max-width: 768px) {
+    [role="dialog"][aria-modal="true"] {
+        -webkit-touch-callout: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        user-select: none !important;
+        touch-action: manipulation !important;
+    }
+
+    .lightbox-image-container {
+        touch-action: pan-x pan-y pinch-zoom !important;
+    }
+}
+
+/* Prevent context menu on images */
+.lightbox-image-container img {
+    -webkit-touch-callout: none !important;
+}
+
+/* Safari-specific fixes for cursor inheritance */
+@supports (-webkit-touch-callout: none) {
+    [role="dialog"][aria-modal="true"] {
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        user-select: none !important;
+    }
+
+    .lightbox-image-container {
+        -webkit-transform: unset !important;
+        transform: unset !important;
+        will-change: transform !important;
+    }
+}
+
+/* Ensure no global cursor conflicts */
+.lightbox-image-container * {
+    cursor: inherit !important;
+}
+
+/* High priority rules for zoom states */
+.lightbox-image-container[style*="cursor: grab"] {
+    cursor: grab !important;
+}
+
+.lightbox-image-container[style*="cursor: grabbing"] {
+    cursor: grabbing !important;
+}
+
+.lightbox-image-container[style*="cursor: default"] {
+    cursor: default !important;
+}
+
+/* Force perfect centering for images */
+.lightbox-image-container img {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    margin: 0 auto !important;
+    display: block !important;
+}
+
+/* Prevent any global styles from affecting lightbox positioning */
+[role="dialog"][aria-modal="true"] * {
+    box-sizing: border-box !important;
+}
+
+/* Override any transform-origin issues */
+.lightbox-image-container {
+    transform-origin: center center !important;
+}
+
+/* Ensure backdrop covers entire screen */
+[role="dialog"][aria-modal="true"]::before {
+    content: '' !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: transparent !important;
+    z-index: -1 !important;
+}

@@ -1,0 +1,53 @@
+/* Grid visibility and layout fixes */
+
+/* Ensure VirtualizedGrid container is visible */
+.grid {
+    display: grid !important;
+    min-height: 0;
+}
+
+/* Ensure grid items are visible during animation */
+.grid>div {
+    position: relative;
+}
+
+/* Hydration-safe visibility - prevent FOUC (Flash of Unstyled Content) */
+.grid>div {
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Animation fallback for browsers that don't support custom animations */
+@media (prefers-reduced-motion: reduce) {
+
+    .animate-fade-in,
+    .animate-scale-in,
+    .animate-slide-up {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+}
+
+/* Ensure images have proper aspect ratio */
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
+/* Fix for potential z-index issues */
+.relative {
+    position: relative;
+}
+
+/* Ensure the grid container has proper height */
+.min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+/* Browser extension compatibility */
+body[data-new-gr-c-s-check-loaded],
+body[data-gr-ext-installed] {
+    /* Ensure Grammarly attributes don't break layout */
+    display: block;
+}

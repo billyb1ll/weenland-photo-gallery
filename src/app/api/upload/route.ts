@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadImage, UploadResult } from "@/lib/unified-storage";
+import {
+	uploadOriginalImageToGCS,
+	updateImagesJsonWithFilenames,
+	ImageDataByFileName,
+} from "@/lib/storage";
 import { verifyAuth } from "@/lib/auth";
 import fs from "fs/promises";
 import path from "path";
@@ -16,9 +21,7 @@ export async function POST(request: NextRequest) {
 		const file = formData.get("file") as File;
 		const day = parseInt(formData.get("day") as string) || 1;
 		const title = formData.get("title") as string;
-		const category = (formData.get("category") as string) || "general";
-		const tagsString = formData.get("tags") as string;
-		const tags = tagsString ? tagsString.split(",").map((tag) => tag.trim()) : [];
+		const useFilenames = formData.get("useFilenames") === "true"; // New parameter
 
 		if (!file) {
 			return NextResponse.json({ error: "ไม่พบไฟล์รูปภาพ" }, { status: 400 });
@@ -43,31 +46,56 @@ export async function POST(request: NextRequest) {
 		const arrayBuffer = await file.arrayBuffer();
 		const buffer = Buffer.from(arrayBuffer);
 
-		// Read existing images to pass to upload function for ID generation
-		const srcImagesPath = path.join(process.cwd(), "src/data/images.json");
-		let existingImages: Array<{ id: number; uploadDate: string }> = [];
-		try {
-			const fileContent = await fs.readFile(srcImagesPath, "utf8");
-			existingImages = JSON.parse(fileContent);
-		} catch {
-			// File doesn't exist yet, start with empty array
+		if (useFilenames) {
+			// Use filename-based upload system
+			const uploadResult = await uploadOriginalImageToGCS(buffer, file.name, day);
+
+			// Override with user-provided metadata
+			const finalResult: ImageDataByFileName = {
+				...uploadResult,
+				title: title || uploadResult.title,
+			};
+
+			// Update images.json with filename-based data
+			await updateImagesJsonWithFilenames([finalResult]);
+
+			return NextResponse.json({
+				success: true,
+				message: "อัปโหลดรูปภาพสำเร็จ (filename-based)",
+				image: finalResult,
+			});
+		} else {
+			// Use traditional ID-based upload system
+			// Read existing images to pass to upload function for ID generation
+			const srcImagesPath = path.join(process.cwd(), "src/data/images.json");
+			let existingImages: Array<{ id: number; uploadDate: string }> = [];
+			try {
+				const fileContent = await fs.readFile(srcImagesPath, "utf8");
+				existingImages = JSON.parse(fileContent);
+			} catch {
+				// File doesn't exist yet, start with empty array
+			}
+
+			// Upload using unified storage (will automatically choose GCS or mock)
+			const uploadResult = await uploadImage(
+				buffer,
+				file.name,
+				day,
+				existingImages
+			);
+
+			// Override the upload result with user-provided metadata
+			uploadResult.title = title || uploadResult.title;
+
+			// Update images.json file with new image data
+			await updateImagesJson(uploadResult);
+
+			return NextResponse.json({
+				success: true,
+				message: "อัปโหลดรูปภาพสำเร็จ",
+				image: uploadResult,
+			});
 		}
-
-		// Upload using unified storage (will automatically choose GCS or mock)
-		const uploadResult = await uploadImage(
-			buffer,
-			file.name,
-			day,
-			existingImages
-		);
-
-		// Override the upload result with user-provided metadata
-		uploadResult.title = title || uploadResult.title;
-		uploadResult.category = category;
-		uploadResult.tags = tags;
-
-		// Update images.json file with new image data
-		await updateImagesJson(uploadResult);
 
 		// Clear the images cache to ensure fresh data is loaded
 		try {
@@ -82,12 +110,6 @@ export async function POST(request: NextRequest) {
 			console.error("Failed to clear images cache:", error);
 			// Don't fail the upload if cache clearing fails
 		}
-
-		return NextResponse.json({
-			success: true,
-			message: "อัปโหลดรูปภาพสำเร็จ",
-			image: uploadResult,
-		});
 	} catch (error) {
 		console.error("Upload error:", error);
 		return NextResponse.json(
@@ -126,8 +148,6 @@ async function updateImagesJson(newImage: UploadResult) {
 			thumbnailUrl: newImage.thumbnailUrl,
 			fullUrl: newImage.fullUrl,
 			title: newImage.title, // Use the title from upload result
-			category: newImage.category,
-			tags: newImage.tags,
 			day: newImage.day,
 			uploadDate: newImage.uploadDate,
 			gcsPath: newImage.gcsPath,

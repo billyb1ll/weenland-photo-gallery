@@ -3,8 +3,6 @@
 export interface ImageData {
 	id: string;
 	title: string;
-	category: string;
-	tags: string[];
 	thumbnailUrl: string;
 	fullUrl: string;
 	uploadDate: string;
@@ -16,12 +14,26 @@ export interface ImageData {
 	};
 }
 
+export interface ImageDataByFilename {
+	filename: string;
+	title: string;
+	thumbnailUrl: string;
+	fullUrl: string;
+	uploadDate: string;
+	day: number;
+	gcsPath: string;
+	originalSize?: number;
+	dimensions?: {
+		width: number;
+		height: number;
+	};
+}
+
 export interface GalleryState {
 	images: ImageData[];
 	selectedImages: Set<string>;
 	favorites: Set<string>;
 	searchTerm: string;
-	selectedCategory: string;
 	currentPage: number;
 	hasMore: boolean;
 	isLoading: boolean;
@@ -59,8 +71,6 @@ export interface LightboxState {
 }
 
 export interface FilterOptions {
-	categories: string[];
-	tags: string[];
 	dateRange?: {
 		start: Date;
 		end: Date;
